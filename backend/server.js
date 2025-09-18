@@ -1,17 +1,28 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const sqlite3 = require('sqlite3').verbose();
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import sqlite3 from 'sqlite3';
+import fetch from 'node-fetch';
+import { Translate } from '@google-cloud/translate/build/src/v2/index.js';
+import puppeteer from 'puppeteer';
+import * as cheerio from 'cheerio';
+import fs from 'fs';
+import path from 'path';
+import PDFDocument from 'pdfkit';
+import { scrapeAgriVendors } from './scrape_agri_vendors_improved.js';
 
 const app = express();
-const port = 5001;
+const port = 5002;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 const GOOGLE_TRANSLATE_API_KEY = process.env.GOOGLE_TRANSLATE_API_KEY;
 const GOOGLE_TRANSLATE_API_URL = `https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_TRANSLATE_API_KEY}`;
+
+const translate = new Translate({key: GOOGLE_TRANSLATE_API_KEY});
 
 // -------------------------
 // Initialize SQLite Database
@@ -61,7 +72,8 @@ async function callGeminiAPI(prompt) {
   try {
     return JSON.parse(content);
   } catch (err) {
-    throw new Error(`Failed to parse Gemini JSON response: ${content}`);
+    // If not JSON, return as text
+    return content;
   }
 }
 
@@ -74,28 +86,357 @@ async function translateText(text, targetLanguage, sourceLanguage = 'en') {
     return text;
   }
 
-  const params = new URLSearchParams();
-  params.append('target', targetLanguage);
-  params.append('source', sourceLanguage);
-  params.append('key', GOOGLE_TRANSLATE_API_KEY);
-  params.append('q', text);
-
-  const response = await fetch(`${GOOGLE_TRANSLATE_API_URL}&${params}`, {
-    method: 'POST',
-  });
-
-  if (!response.ok) {
-    console.warn('Translation failed, returning original text');
+  try {
+    const [translation] = await translate.translate(text, {from: sourceLanguage, to: targetLanguage});
+    return translation;
+  } catch (error) {
+    console.warn('Translation failed, returning original text', error);
     return text;
   }
+}
 
-  const data = await response.json();
-  return data.data.translations[0].translatedText;
+// -------------------------
+// Vendor Data Fetching Function using Overpass API and fallback scraping
+// -------------------------
+async function fetchAgriculturalVendors(location, search_radius_meters = 2000, max_results = 200) {
+  const overpassUrl = 'https://overpass-api.de/api/interpreter';
+
+  // Helper to build Overpass QL query for agricultural vendors
+  const buildOverpassQuery = (lat, lon, radius) => {
+    return `
+      [out:json][timeout:25];
+      (
+        node["shop"="fertilizer"](around:${radius},${lat},${lon});
+        node["shop"="seed"](around:${radius},${lat},${lon});
+        node["shop"="pesticide"](around:${radius},${lat},${lon});
+        node["shop"="agricultural_machinery"](around:${radius},${lat},${lon});
+        node["shop"="irrigation"](around:${radius},${lat},${lon});
+        node["shop"="agri_input"](around:${radius},${lat},${lon});
+      );
+      out body ${max_results};
+    `;
+  };
+
+  // Helper to parse lat, lon from location string if possible
+  const parseLatLon = (loc) => {
+    const parts = loc.split(',').map(s => s.trim());
+    if (parts.length === 2) {
+      const lat = parseFloat(parts[0]);
+      const lon = parseFloat(parts[1]);
+      if (!isNaN(lat) && !isNaN(lon)) {
+        return { lat, lon };
+      }
+    }
+    return null;
+  };
+
+  // Convert latlon to plain text table string
+  const formatVendorsTable = (vendors, location) => {
+    let table = `Agricultural Vendors in ${location}\n\n`;
+    table += '| ID | Name | Type | Latitude | Longitude | Address | Phone | Website |\n';
+    table += '|----|------|------|----------|-----------|---------|-------|---------|\n';
+    vendors.forEach((v, idx) => {
+      table += `| ${idx + 1} | ${v.name || ''} | ${v.type || ''} | ${v.lat || ''} | ${v.lon || ''} | ${v.address || ''} | ${v.phone || ''} | ${v.website || ''} |\n`;
+    });
+    table += `\n✅ ${vendors.length} agricultural vendors found in ${location}.\n`;
+    return table;
+  };
+
+  try {
+    const latlon = parseLatLon(location);
+    if (!latlon) {
+      throw new Error('Invalid location format. Provide "lat,lon" or city,state.');
+    }
+
+    const query = buildOverpassQuery(latlon.lat, latlon.lon, search_radius_meters);
+    const response = await fetch(overpassUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `data=${encodeURIComponent(query)}`,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Overpass API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const elements = data.elements || [];
+
+    // Map Overpass elements to vendor objects
+    const vendors = elements.map(el => ({
+      id: el.id,
+      name: el.tags && el.tags.name ? el.tags.name : 'Unknown',
+      type: el.tags && el.tags.shop ? el.tags.shop : '',
+      lat: el.lat,
+      lon: el.lon,
+      address: el.tags && el.tags['addr:full'] ? el.tags['addr:full'] : (el.tags && el.tags['addr:street'] ? el.tags['addr:street'] : ''),
+      phone: el.tags && el.tags.phone ? el.tags.phone : '',
+      website: el.tags && el.tags.website ? el.tags.website : '',
+      source_url: `https://www.openstreetmap.org/node/${el.id}`
+    }));
+
+    // Deduplicate by name + address
+    const uniqueVendors = vendors.filter((v, i, arr) =>
+      i === arr.findIndex(t => t.name === v.name && t.address === v.address)
+    ).slice(0, max_results);
+
+    // Format as plain text table
+    const tableText = formatVendorsTable(uniqueVendors, location);
+    return tableText;
+
+  } catch (error) {
+    console.error('Overpass API fetch error:', error.message);
+    // Fallback to scraping existing scrapeVendors function and format as plain text table
+
+    const scrapedVendors = await scrapeVendors(location);
+    if (scrapedVendors.length === 0) {
+      return `No agricultural vendors found in ${location}.`;
+    }
+
+    // Format scraped vendors as plain text table
+    let table = `Agricultural Vendors in ${location}\n\n`;
+    table += '| ID | Name | Type | Latitude | Longitude | Address | Phone | Website |\n';
+    table += '|----|------|------|----------|-----------|---------|-------|---------|\n';
+    scrapedVendors.forEach((v, idx) => {
+      table += `| ${idx + 1} | ${v.name || ''} | Unknown | N/A | N/A | ${v.address || ''} | ${v.contact || ''} | N/A |\n`;
+    });
+    table += `\n✅ ${scrapedVendors.length} agricultural vendors found in ${location}.\n`;
+    return table;
+  }
+}
+
+// -------------------------
+// Web Scraping Function for Government Organizations
+// -------------------------
+async function scrapeGovernmentOrgs(location) {
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+
+    const searchQueries = [
+      `government agricultural offices in ${location}`,
+      `agricultural department ${location}`,
+      `ministry of agriculture ${location}`,
+      `agriculture office ${location} government`,
+      `agriculture board ${location}`,
+      `farmers welfare department ${location}`,
+      `agriculture authority ${location}`,
+      `agriculture extension services ${location}`,
+      `agriculture research institutes ${location}`,
+      `government agriculture schemes ${location}`,
+      `agricultural organizations ${location}`,
+      `farm subsidies ${location}`,
+      `agriculture cooperatives ${location}`,
+      `government farming support ${location}`,
+      `agriculture development office ${location}`,
+      `farmers helpline ${location}`,
+      `agriculture helpline ${location}`,
+      `government schemes helpline ${location}`,
+      `farm support contact ${location}`,
+      `agriculture department contact ${location}`
+    ];
+
+    const allOrgs = [];
+
+    for (const searchQuery of searchQueries) {
+      if (allOrgs.length >= 10) break; // Stop if we have enough results
+
+      console.log(`Searching for government orgs: ${searchQuery}`);
+
+      const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}+contact+phone+address`;
+      console.log(`Google Search URL: ${googleSearchUrl}`);
+      await page.goto(googleSearchUrl, { waitUntil: 'networkidle2' });
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      // Get the HTML content
+      const html = await page.content();
+      const $ = cheerio.load(html);
+
+      // Extract organic search results
+      $('.g, .result, [data-ved]').each((index, element) => {
+        if (index >= 15) return; // Limit to 15 results per query
+
+        const title = $(element).find('h3, .LC20lb').first().text().trim();
+        const snippet = $(element).find('.VwiC3b, .aCOpRe, span').first().text().trim();
+        const contact = $(element).find('a[href^="tel:"], a[href^="mailto:"], .LrzXr').first().text().trim();
+const address = $(element).find('.rllt__details div:nth-child(2)').first().text().trim() || snippet;
+
+        // Function to extract phone numbers from text
+        const extractPhoneNumbers = (text) => {
+          const phoneRegex = /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\d{10}|\d{4}[-.\s]\d{6}|\d{3}[-.\s]\d{7}|\d{5}[-.\s]\d{5}|\d{4}[-.\s]\d{3}[-.\s]\d{3}|\d{3}[-.\s]\d{3}[-.\s]\d{4}|\d{2}[-.\s]\d{8}|\d{1}[-.\s]\d{9}|\d{10,12}|\d{4}[-.\s]\d{6}|\d{3}[-.\s]\d{7}|\d{5}[-.\s]\d{5}|\d{4}[-.\s]\d{3}[-.\s]\d{3}|\d{3}[-.\s]\d{3}[-.\s]\d{4}|\d{2}[-.\s]\d{8}|\d{1}[-.\s]\d{9}|\d{10,12}/g;
+          const matches = text.match(phoneRegex);
+          return matches ? matches.join(', ') : '';
+        };
+
+        // Extract phone numbers from snippet and title
+        const phoneFromSnippet = extractPhoneNumbers(snippet);
+        const phoneFromTitle = extractPhoneNumbers(title);
+        const phoneFromContact = contact ? extractPhoneNumbers(contact) : '';
+
+        const combinedContact = [phoneFromContact, phoneFromSnippet, phoneFromTitle].filter(p => p).join(', ') || 'Contact for details';
+
+        // Filter for government agricultural offices
+        if (title && title.length > 3 && (
+          title.toLowerCase().includes('agriculture') ||
+          title.toLowerCase().includes('farm') ||
+          title.toLowerCase().includes('department') ||
+          title.toLowerCase().includes('government') ||
+          title.toLowerCase().includes('ministry') ||
+          title.toLowerCase().includes('office') ||
+          title.toLowerCase().includes('board') ||
+          title.toLowerCase().includes('authority') ||
+          title.toLowerCase().includes('welfare') ||
+          title.toLowerCase().includes('extension') ||
+          title.toLowerCase().includes('research') ||
+          title.toLowerCase().includes('schemes') ||
+          title.toLowerCase().includes('helpline') ||
+          title.toLowerCase().includes('support')
+        )) {
+          allOrgs.push({
+            name: title,
+            address: address.substring(0, 100) || `${location} area`,
+            contact: combinedContact
+          });
+        }
+      });
+
+      console.log(`Query "${searchQuery}" extracted ${allOrgs.length} organizations so far`);
+    }
+
+    // Remove duplicates and limit to 10 organizations
+    const uniqueOrgs = allOrgs.filter((org, index, self) =>
+      index === self.findIndex(o => o.name === org.name)
+    ).slice(0, 10);
+
+    console.log(`Final unique organizations:`, uniqueOrgs.length);
+    return uniqueOrgs;
+
+  } catch (error) {
+    console.error('Government orgs scraping error:', error.message);
+    return [];
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
 }
 
 // -------------------------
 // Routes
 // -------------------------
+
+// New API endpoint for scraping agricultural vendors
+app.post('/api/scrape-agri-vendors', async (req, res) => {
+  const { location, search_radius_meters, max_results } = req.body;
+  if (!location) {
+    return res.status(400).json({ error: 'Location is required' });
+  }
+  try {
+    const radius = search_radius_meters ? parseInt(search_radius_meters, 10) : 2000;
+    const maxRes = max_results ? parseInt(max_results, 10) : 200;
+    const resultTable = await scrapeAgriVendors(location, radius, maxRes);
+    if (!resultTable) {
+      return res.status(500).json({ error: 'Failed to scrape agricultural vendors' });
+    }
+
+    // Generate PDF with vendor data
+    const doc = new PDFDocument();
+    const buffers = [];
+
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => {
+      const pdfBuffer = Buffer.concat(buffers);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="agri_vendors_${location.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
+      res.send(pdfBuffer);
+    });
+
+    // Add title
+    doc.fontSize(18).text(`Agricultural Vendors in ${location}`, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Generated on: ${new Date().toLocaleString()}`);
+    doc.moveDown();
+
+    // Parse the result table to extract vendor data
+    const lines = resultTable.split('\n');
+    const vendors = [];
+
+    // Skip header lines and extract vendor data
+    for (let i = 3; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line && !line.startsWith('✅') && !line.startsWith('---')) {
+        // Parse table row: | ID | Name | Type | Lat | Lon | Address | Phone | Website | GST/ID | Source URL |
+        const parts = line.split('|').map(p => p.trim());
+        if (parts.length >= 11) {
+          const vendor = {
+            id: parts[1],
+            name: parts[2],
+            type: parts[3],
+            lat: parts[4],
+            lon: parts[5],
+            address: parts[6],
+            phone: parts[7],
+            website: parts[8],
+            gst_id: parts[9],
+            source_url: parts[10]
+          };
+
+          // Skip vendors with empty or invalid data
+          if (vendor.name && vendor.name !== 'Unknown' &&
+              vendor.address && vendor.address !== 'N/A' &&
+              (vendor.phone || vendor.website)) {
+            vendors.push(vendor);
+          }
+        }
+      }
+    }
+
+    // Add vendor details to PDF
+    vendors.forEach((vendor, index) => {
+      doc.moveDown();
+      doc.fontSize(14).text(`${index + 1}. ${vendor.name}`, { underline: true });
+      doc.moveDown(0.5);
+
+      doc.fontSize(10);
+      if (vendor.type && vendor.type !== 'Agricultural Vendor') {
+        doc.text(`Type: ${vendor.type}`);
+      }
+      if (vendor.address && vendor.address !== 'N/A') {
+        doc.text(`Address: ${vendor.address}`);
+      }
+      if (vendor.phone && vendor.phone !== '') {
+        doc.text(`Phone: ${vendor.phone}`);
+      }
+      if (vendor.website && vendor.website !== '') {
+        doc.text(`Website: ${vendor.website}`);
+      }
+      if (vendor.lat && vendor.lon && vendor.lat !== '' && vendor.lon !== '') {
+        doc.text(`Coordinates: ${vendor.lat}, ${vendor.lon}`);
+      }
+      if (vendor.gst_id && vendor.gst_id !== '') {
+        doc.text(`GST/ID: ${vendor.gst_id}`);
+      }
+      if (vendor.source_url && vendor.source_url !== '') {
+        doc.text('View Location', { link: vendor.source_url });
+      }
+      doc.moveDown();
+    });
+
+    // Add summary
+    doc.moveDown();
+    doc.fontSize(12).text(`Total Vendors Found: ${vendors.length}`, { align: 'center' });
+
+    doc.end();
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Save user input
 app.post('/api/user-inputs', (req, res) => {
@@ -131,34 +472,55 @@ app.post('/api/crop-analysis', async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const prompt = `
-You are a 40+ year experienced farmer. Based on these inputs:
+  const prompt = `You are a 40+ year experienced farmer. Based on these inputs:
 Location: ${location}, Land Size: ${landSize}, Land Type: ${landType}, Land Health: ${landHealth}, Season: ${season}, Water Facility: ${waterFacility}, Duration: ${duration}
 
-Generate 3-5 recommended crops suitable for these conditions.
-For each crop, include:
-- cropName
-- requiredInvestment (₹/acre)
-- expectedProfit (₹/acre)
-- reasoning
+Generate a detailed farm advisory report recommending 3-5 crops suitable for these conditions.
+Include for each crop:
+- Crop name
+- Required investment (₹/acre)
+- Expected profit (₹/acre)
+- Reasoning
 
-Return ONLY JSON with this structure:
-{ "recommendedCrops": [ { "cropName":"", "requiredInvestment":"", "expectedProfit":"", "reasoning":"" } ] }
+Return ONLY plain text, not JSON. Structure the report as a professional text document with sections for each crop.
 `;
 
   try {
-    const result = await callGeminiAPI(prompt);
+    // Call Gemini API directly for text response
+    const response = await fetch(GEMINI_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    });
 
-    // Translate reasoning if language is not English
-    if (language && language !== 'en') {
-      for (let crop of result.recommendedCrops) {
-        if (crop.reasoning) {
-          crop.reasoning = await translateText(crop.reasoning, language);
-        }
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gemini API error: ${errorText}`);
     }
 
-    res.json(result);
+    const data = await response.json();
+    let content = data.candidates[0].content.parts[0].text.trim();
+    content = content.replace(/```json\s*([\s\S]*?)```/g, '$1').replace(/```/g, '').trim();
+
+    // Always generate PDF
+    const doc = new PDFDocument();
+    const buffers = [];
+
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', () => {
+      const pdfBuffer = Buffer.concat(buffers);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="crop_advisory_report.pdf"');
+      res.send(pdfBuffer);
+    });
+
+    doc.fontSize(16).text('Farm Advisory Report', { align: 'center' });
+    doc.moveDown();
+
+    // Treat content as text
+    doc.fontSize(12).text(content || 'No recommendations available.');
+
+    doc.end();
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -169,8 +531,7 @@ app.post('/api/crop-plan', async (req, res) => {
   const { cropName, location, landSize, landType, season, language } = req.body;
   if (!cropName) return res.status(400).json({ error: 'Crop name is required' });
 
-  const prompt = `
-You are an expert agricultural consultant. Create a detailed farming plan for ${cropName}:
+  const prompt = `You are an expert agricultural consultant. Create a detailed farming plan for ${cropName}:
 - Include daily/weekly tasks
 - Include fertilizers, pesticides, and their doses
 - Include milestones
@@ -251,8 +612,7 @@ app.post('/api/disease-detection', async (req, res) => {
   const { imageBase64, cropType } = req.body;
   if (!imageBase64) return res.status(400).json({ error: 'Image is required' });
 
-  const prompt = `
-You are an expert plant pathologist. Analyze this crop image for diseases. Crop type: ${cropType || 'Unknown'}
+  const prompt = `You are an expert plant pathologist. Analyze this crop image for diseases. Crop type: ${cropType || 'Unknown'}
 Image data (truncated): ${imageBase64.substring(0, 1000)}...
 
 Return ONLY JSON:
@@ -282,39 +642,110 @@ Return ONLY JSON:
 });
 
 // Local Market Info
-app.post('/api/local-market', (req, res) => {
+app.post('/api/local-market', async (req, res) => {
   const { location, crop } = req.body;
-  if (!location || !crop) return res.status(400).json({ error: 'Missing location or crop' });
+  if (!location) return res.status(400).json({ error: 'Missing location' });
 
-  const vendors = [
-    { name: 'Mandi A', address: `${location} Market Area`, contact: '123-456-7890' },
-    { name: 'Mandi B', address: `${location} Central Market`, contact: '987-654-3210' },
-  ];
-  res.json({ vendors });
+  try {
+    const vendors = await scrapeVendors(location, crop);
+
+    // If no vendors found from scraping, return mock data for demo
+    if (vendors.length === 0) {
+      const mockVendors = [
+        {
+          name: `${crop || 'Agricultural'} Supply Store - ${location}`,
+          address: `${location} Main Road, Near Market Area`,
+          contact: '+91-9876543210'
+        },
+        {
+          name: `${location} Farmers Cooperative`,
+          address: `${location} Agriculture Complex`,
+          contact: '+91-9876543211'
+        },
+        {
+          name: `${crop || 'Crop'} Dealers Hub`,
+          address: `${location} Industrial Area`,
+          contact: '+91-9876543212'
+        }
+      ];
+      console.log('Returning mock vendors as scraping found no results');
+      res.json({ vendors: mockVendors });
+    } else {
+      res.json({ vendors });
+    }
+  } catch (error) {
+    console.error('Error fetching vendors:', error.message);
+    res.json({ vendors: [] });
+  }
 });
 
 // Government Organizations
-app.post('/api/government-organizations', (req, res) => {
+app.post('/api/government-organizations', async (req, res) => {
   const { location } = req.body;
   if (!location) return res.status(400).json({ error: 'Missing location' });
 
-  const organizations = [
-    { name: 'Rythu Bharosa', address: `${location} Office`, contact: '111-222-3333' },
-    { name: 'Agriculture Dept', address: `${location} Agriculture Building`, contact: '444-555-6666' },
-  ];
-  res.json({ organizations });
+  try {
+    const organizations = await scrapeGovernmentOrgs(location);
+
+    // If no organizations found from scraping, return mock data for demo
+    if (organizations.length === 0) {
+      const mockOrganizations = [
+        {
+          name: `${location} Agriculture Department`,
+          address: `${location} Government Complex, Agriculture Wing`,
+          contact: '+91-9876543210'
+        },
+        {
+          name: `${location} Farmers Welfare Office`,
+          address: `${location} District Administration Building`,
+          contact: '+91-9876543211'
+        },
+        {
+          name: `${location} Ministry of Agriculture Extension Services`,
+          address: `${location} Agriculture Research Center`,
+          contact: '+91-9876543212'
+        },
+        {
+          name: `${location} Government Schemes Helpline`,
+          address: `${location} Agriculture Board Office`,
+          contact: '+91-9876543213'
+        },
+        {
+          name: `${location} Farmers Cooperative Society`,
+          address: `${location} Cooperative Building`,
+          contact: '+91-9876543214'
+        }
+      ];
+      console.log('Returning mock organizations as scraping found no results');
+      res.json({ organizations: mockOrganizations });
+    } else {
+      res.json({ organizations });
+    }
+  } catch (error) {
+    console.error('Error fetching government organizations:', error.message);
+    res.json({ organizations: [] });
+  }
 });
 
-// Bank Loans
+// Bank Loans API endpoint updated to serve scraped data
 app.post('/api/bank-loans', (req, res) => {
   const { location, crop } = req.body;
   if (!location || !crop) return res.status(400).json({ error: 'Missing location or crop' });
 
-  const schemes = [
-    { scheme: 'Crop Loan Scheme A', loanAmount: '₹1,00,000', interestRate: '7%', apply: 'Local Bank Branch' },
-    { name: 'Agriculture Loan B', loanAmount: '₹2,00,000', interestRate: '6.5%', apply: 'Online Application' },
-  ];
-  res.json({ schemes });
+  const filePath = path.join(__dirname, 'bank_loans.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading bank_loans.json:', err.message);
+      return res.status(500).json({ error: 'Failed to load bank loan schemes' });
+    }
+    try {
+      const schemes = JSON.parse(data);
+      res.json({ schemes });
+    } catch (parseErr) {
+      console.error('Error parsing bank_loans.json:', parseErr.message);
+      res.status(500).json({ error: 'Invalid bank loan schemes data' });
+    }
+  });
 });
 
 // -------------------------

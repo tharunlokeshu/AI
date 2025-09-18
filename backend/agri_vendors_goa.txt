@@ -1,0 +1,22 @@
+Agricultural Vendors in goa
+
+| ID | Name | Type | Latitude | Longitude | Address | Phone | Website | GST/ID |
+|----|------|------|----------|-----------|---------|-------|---------|--------|
+| 1 | Purva Farm | Agricultural Vendor |  |  |  |  | https://www.google.com/maps/place/Purva+Farm/data=!4m7!3m6!1s0x3bbfaf15e1a5e59f:0xa96e5275a89b9b0!8m2!3d15.3601486!4d74.099262!16s%2Fg%2F11g6qvm4nm!19sChIJn-Wl4RWvvzsRsLmJWifllgo?authuser=0&hl=en&rclk=1 |  |
+| 2 | Unknown | Agricultural Vendor |  |  | N/A |  |  |  |
+| 3 | The Goa Agricultural Produce and Livestock Marketing Board | Agricultural Vendor |  |  |  |  | https://www.google.com/maps/place/The+Goa+Agricultural+Produce+and+Livestock+Marketing+Board/data=!4m7!3m6!1s0x3bbfb17b8fec9ceb:0x375eca62f86cb524!8m2!3d15.3013128!4d73.9756567!16s%2Fg%2F1v82_k29!19sChIJ65zsj3uxvzsRJLVs-GLKXjc?authuser=0&hl=en&rclk=1 |  |
+| 4 | Goa Krushi Kendra | Agricultural Vendor |  |  |  |  | https://www.google.com/maps/place/Goa+Krushi+Kendra/data=!4m7!3m6!1s0x3bbe5abd9a6b3dcb:0x7a242f52bc6b522a!8m2!3d15.0071758!4d74.0525407!16s%2Fg%2F11c0rr15jm!19sChIJyz1rmr1avjsRKlJrvFIvJHo?authuser=0&hl=en&rclk=1 |  |
+| 5 | Pala Farms | Agricultural Vendor |  |  |  |  | https://www.google.com/maps/place/Pala+Farms/data=!4m7!3m6!1s0x3bbfab558ac7ac2d:0x4139f2c1cf63fbb4!8m2!3d15.2172681!4d74.1139928!16s%2Fg%2F11r3bnf0v0!19sChIJLazHilWrvzsRtPtjz8HyOUE?authuser=0&hl=en&rclk=1 |  |
+| 6 | Tropical Mushrooms Goa Pvt. Ltd. | Agricultural Vendor |  |  |  |  | https://www.google.com/maps/place/Tropical+Mushrooms+Goa+Pvt.+Ltd./data=!4m7!3m6!1s0x3bbfa45862297029:0x380fc0e12b807f7e!8m2!3d15.4458067!4d74.0789628!16s%2Fg%2F11c5rr_blb!19sChIJKXApYlikvzsRfn-AK-HADzg?authuser=0&hl=en&rclk=1 |  |
+| 7 | SBS Enterprises | Agricultural Vendor |  |  | Goa |  |  |  |
+| 8 | Kamat Engineers Group | Agricultural Vendor |  |  | Goa35 Years in Business |  |  |  |
+| 9 | Purva Farm | Agricultural Vendor |  |  | Goa11 Years in Business |  |  |  |
+| 10 | Shivram D N Pankar | Agricultural Vendor |  |  | Goa36 Years in Business |  |  |  |
+| 11 | Patel Power Tools | Agricultural Vendor |  |  | Goa10 Years in Business |  |  |  |
+| 12 | STIHL SHOWROOM - PATIL GALLI | Agricultural Vendor |  |  | BelgaumAlso ServesGoa4 Years in Business |  |  |  |
+| 13 | Mahamuni Agro Equipments | Agricultural Vendor |  |  | JaysingpurAlso ServesGoa23 Years in Business |  |  |  |
+| 14 | Agri 24 | Agricultural Vendor |  |  | BangaloreAlso ServesGoa3 Years in Business |  |  |  |
+| 15 | Agrosiaa | Agricultural Vendor |  |  | PuneAlso ServesGoa9 Years in Business |  |  |  |
+| 16 | Meraj Tech Services | Agricultural Vendor |  |  | Navi MumbaiAlso ServesGoa9 Years in Business |  |  |  |
+
+✅ 16 agricultural vendors found in goa.

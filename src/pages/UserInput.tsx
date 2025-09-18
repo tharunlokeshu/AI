@@ -88,7 +88,7 @@ const UserInput = () => {
 
     try {
       // Save to backend database
-      const response = await fetch('http://localhost:5001/api/user-inputs', {
+      const response = await fetch('/api/user-inputs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

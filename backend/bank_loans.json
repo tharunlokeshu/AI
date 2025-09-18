@@ -1,0 +1,29 @@
+[
+  {
+    "scheme": "Kisan Credit Card Scheme",
+    "crop": "Groundnut",
+    "loan_amount": "₹50,000 - ₹3,00,000",
+    "interest_rate": "4% - 7%",
+    "apply": "Apply at cooperative banks or RBI authorized banks",
+    "description": "Kisan Credit Card scheme provides timely and adequate credit to farmers for their cultivation needs.",
+    "source": "Government of India"
+  },
+  {
+    "scheme": "Agriculture Infrastructure Fund",
+    "crop": "Groundnut",
+    "loan_amount": "₹2,00,000 - ₹10,00,000",
+    "interest_rate": "7% - 9%",
+    "apply": "Apply through NABARD portal or bank branches",
+    "description": "AIF provides medium to long-term debt financing for investment in viable projects for post-harvest management.",
+    "source": "NABARD"
+  },
+  {
+    "scheme": "PM Kisan Samman Nidhi",
+    "crop": "Groundnut",
+    "loan_amount": "₹1,00,000 - ₹6,00,000",
+    "interest_rate": "6% - 8%",
+    "apply": "Apply through PM Kisan portal or bank branches",
+    "description": "PM-KISAN provides income support to all landholding farmers' families across the country.",
+    "source": "Government of India"
+  }
+]

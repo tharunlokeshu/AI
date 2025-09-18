@@ -1,0 +1,11 @@
+Agricultural Vendors in Delhi, India
+
+| ID | Name | Type | Latitude | Longitude | Address | Phone | Website | GST/ID |
+|----|------|------|----------|-----------|---------|-------|---------|--------|
+| 1 | Baldev Engineering | Agricultural Vendor |  |  | Navi Mumbai16 Years in Business |  |  |  |
+| 2 | Green View | Agricultural Vendor |  |  | Navi Mumbai26 Years in Business |  |  |  |
+| 3 | Krushi Seva Kedra Shahpur | Agricultural Vendor |  |  | Thane24 Years in Business |  |  |  |
+| 4 | Om Sai Krushi Seve Kendra | Agricultural Vendor |  |  | Palghar20 Years in Business |  |  |  |
+| 5 | Baldev Engineering | Agricultural Vendor |  |  | Palghar8 Years in Business |  |  |  |
+
+✅ 5 agricultural vendors found in Delhi, India.

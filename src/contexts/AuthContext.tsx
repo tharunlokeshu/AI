@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface User {
   name: string;
@@ -33,6 +33,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userInputData, setUserInputData] = useState<UserInputData | null>(null);
   const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
 
+  // Load persisted data on mount
+  useEffect(() => {
+    const savedUserInputData = localStorage.getItem('userInputData');
+    const savedSelectedCrop = localStorage.getItem('selectedCrop');
+
+    if (savedUserInputData) {
+      try {
+        setUserInputData(JSON.parse(savedUserInputData));
+      } catch (error) {
+        console.error('Error parsing saved userInputData:', error);
+        localStorage.removeItem('userInputData');
+      }
+    }
+
+    if (savedSelectedCrop) {
+      setSelectedCrop(savedSelectedCrop);
+    }
+  }, []);
+
   const login = (email: string, password: string) => {
     // Simulate login - in real app, this would call an API
     setUser({ name: 'John Farmer', email });
@@ -50,14 +69,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Reset language to English on logout
     localStorage.setItem('selectedLanguage', 'en');
     localStorage.removeItem('translatedResources');
+    localStorage.removeItem('userInputData');
+    localStorage.removeItem('selectedCrop');
   };
 
   const saveUserInputData = (data: UserInputData) => {
     setUserInputData(data);
+    localStorage.setItem('userInputData', JSON.stringify(data));
   };
 
   const selectCrop = (cropName: string) => {
     setSelectedCrop(cropName);
+    localStorage.setItem('selectedCrop', cropName);
   };
 
   return (

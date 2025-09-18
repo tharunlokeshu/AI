@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,44 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sprout, MapPin, Ruler, Leaf, TestTube, Calendar, Droplets, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+import useTranslate from "@/hooks/useTranslate";
+
+const originalLabels = {
+  title: "Farm Details",
+  description: "Tell us about your farm to get personalized recommendations",
+  location: "Location",
+  locationPlaceholder: "Enter your farm location",
+  landSize: "Land Size",
+  landSizePlaceholder: "Enter land size (acres)",
+  landType: "Land Type",
+  landHealth: "Land Health (pH, fertility, etc.)",
+  landHealthPlaceholder: "Describe soil condition",
+  season: "Season",
+  waterFacility: "Water Facility Availability",
+  duration: "Farming Duration",
+  saveButton: "Save Farm Details",
+  savingButton: "Saving...",
+  selectLocation: "Select location",
+  selectLandType: "Select land type",
+  selectSeason: "Select season",
+  selectWaterFacility: "Select water facility availability",
+  selectDuration: "Select farming duration",
+  alluvial: "Alluvial Soil",
+  red: "Red Soil",
+  black: "Black Soil",
+  sandy: "Sandy Soil",
+  loamy: "Loamy Soil",
+  kharif: "Kharif (Monsoon)",
+  rabi: "Rabi (Winter)",
+  zaid: "Zaid (Summer)",
+  good: "Good",
+  average: "Average",
+  low: "Low",
+  short: "Short term (1-3 months)",
+  medium: "Medium term (3-6 months)",
+  long: "Long term (6+ months)",
+};
 
 const UserInput = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +60,23 @@ const UserInput = () => {
   const [loading, setLoading] = useState(false);
   const { saveUserInputData } = useAuth();
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const { translate, loading: translating } = useTranslate();
+
+  const [translatedLabels, setTranslatedLabels] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const translateLabels = async () => {
+      const translated = await Promise.all(
+        Object.entries(originalLabels).map(async ([key, value]) => ({
+          [key]: await translate(value),
+        }))
+      );
+      const newLabels = Object.assign({}, ...translated);
+      setTranslatedLabels(newLabels);
+    };
+    translateLabels();
+  }, [language, translate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -30,14 +85,30 @@ const UserInput = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save to backend database
+      const response = await fetch('http://localhost:5001/api/user-inputs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 'anonymous', // In a real app, this would be the logged-in user's ID
+          ...formData
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save farm details');
+      }
+
+      // Save to context for immediate use
       saveUserInputData(formData);
       toast.success("Farm details saved successfully!");
       navigate("/dashboard");
     } catch (error) {
+      console.error('Error saving farm details:', error);
       toast.error("Failed to save details. Please try again.");
     } finally {
       setLoading(false);
@@ -45,55 +116,55 @@ const UserInput = () => {
   };
 
   const formFields = [
-    { key: "location", label: "Location", icon: MapPin, placeholder: "Enter your farm location", type: "input" },
-    { key: "landSize", label: "Land Size", icon: Ruler, placeholder: "Enter land size (acres)", type: "input" },
-    { 
-      key: "landType", 
-      label: "Land Type", 
-      icon: Leaf, 
+    { key: "location", label: translatedLabels.location || "Location", icon: MapPin, placeholder: translatedLabels.locationPlaceholder || "Enter your farm location", type: "input" },
+    { key: "landSize", label: translatedLabels.landSize || "Land Size", icon: Ruler, placeholder: translatedLabels.landSizePlaceholder || "Enter land size (acres)", type: "input" },
+    {
+      key: "landType",
+      label: translatedLabels.landType || "Land Type",
+      icon: Leaf,
       type: "select",
       options: [
-        { value: "alluvial", label: "Alluvial Soil" },
-        { value: "red", label: "Red Soil" },
-        { value: "black", label: "Black Soil" },
-        { value: "sandy", label: "Sandy Soil" },
-        { value: "loamy", label: "Loamy Soil" }
+        { value: "alluvial", label: translatedLabels.alluvial || "Alluvial Soil" },
+        { value: "red", label: translatedLabels.red || "Red Soil" },
+        { value: "black", label: translatedLabels.black || "Black Soil" },
+        { value: "sandy", label: translatedLabels.sandy || "Sandy Soil" },
+        { value: "loamy", label: translatedLabels.loamy || "Loamy Soil" }
       ]
     },
-    { key: "landHealth", label: "Land Health (pH, fertility, etc.)", icon: TestTube, placeholder: "Describe soil condition", type: "input" },
-    { 
-      key: "season", 
-      label: "Season", 
-      icon: Calendar, 
+    { key: "landHealth", label: translatedLabels.landHealth || "Land Health (pH, fertility, etc.)", icon: TestTube, placeholder: translatedLabels.landHealthPlaceholder || "Describe soil condition", type: "input" },
+    {
+      key: "season",
+      label: translatedLabels.season || "Season",
+      icon: Calendar,
       type: "select",
       options: [
-        { value: "kharif", label: "Kharif (Monsoon)" },
-        { value: "rabi", label: "Rabi (Winter)" },
-        { value: "zaid", label: "Zaid (Summer)" }
+        { value: "kharif", label: translatedLabels.kharif || "Kharif (Monsoon)" },
+        { value: "rabi", label: translatedLabels.rabi || "Rabi (Winter)" },
+        { value: "zaid", label: translatedLabels.zaid || "Zaid (Summer)" }
       ]
     },
-    { 
-      key: "waterFacility", 
-      label: "Water Facility Availability", 
-      icon: Droplets, 
+    {
+      key: "waterFacility",
+      label: translatedLabels.waterFacility || "Water Facility Availability",
+      icon: Droplets,
       type: "select",
       options: [
-        { value: "good", label: "Good" },
-        { value: "average", label: "Average" },
-        { value: "low", label: "Low" }
+        { value: "good", label: translatedLabels.good || "Good" },
+        { value: "average", label: translatedLabels.average || "Average" },
+        { value: "low", label: translatedLabels.low || "Low" }
       ]
     },
-    { 
-      key: "duration", 
-      label: "Farming Duration", 
-      icon: Clock, 
+    {
+      key: "duration",
+      label: translatedLabels.duration || "Farming Duration",
+      icon: Clock,
       type: "select",
       options: [
-        { value: "short", label: "Short term (1-3 months)" },
-        { value: "medium", label: "Medium term (3-6 months)" },
-        { value: "long", label: "Long term (6+ months)" }
+        { value: "short", label: translatedLabels.short || "Short term (1-3 months)" },
+        { value: "medium", label: translatedLabels.medium || "Medium term (3-6 months)" },
+        { value: "long", label: translatedLabels.long || "Long term (6+ months)" }
       ]
-    },
+    }
   ];
 
   return (
@@ -106,8 +177,8 @@ const UserInput = () => {
                 <Sprout className="h-8 w-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-primary">Farm Details</CardTitle>
-            <CardDescription>Tell us about your farm to get personalized recommendations</CardDescription>
+            <CardTitle className="text-2xl font-bold text-primary">{translatedLabels.title || "Farm Details"}</CardTitle>
+            <CardDescription>{translatedLabels.description || "Tell us about your farm to get personalized recommendations"}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -144,12 +215,12 @@ const UserInput = () => {
                 </div>
               ))}
               
-              <Button 
-                type="submit" 
-                className="w-full bg-primary hover:bg-primary-hover text-primary-foreground mt-8" 
+              <Button
+                type="submit"
+                className="w-full bg-primary hover:bg-primary-hover text-primary-foreground mt-8"
                 disabled={loading}
               >
-                {loading ? "Saving..." : "Save Farm Details"}
+                {loading ? (translatedLabels.savingButton || "Saving...") : (translatedLabels.saveButton || "Save Farm Details")}
               </Button>
             </form>
           </CardContent>

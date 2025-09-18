@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sprout } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,10 +23,10 @@ const Login = () => {
     
     try {
       await login(email, password);
-      toast.success("Login successful!");
+      toast.success(t("loginSuccess") || "Login successful!");
       navigate("/user-input");
     } catch (error) {
-      toast.error("Login failed. Please try again.");
+      toast.error(t("loginFailed") || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -39,17 +41,17 @@ const Login = () => {
               <Sprout className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-primary">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your Smart Crop Advisory account</CardDescription>
+          <CardTitle className="text-2xl font-bold text-primary">{t("welcomeBack") || "Welcome Back"}</CardTitle>
+          <CardDescription>{t("signInToAccount") || "Sign in to your Smart Crop Advisory account"}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("email") || "Email"}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t("enterYourEmail") || "Enter your email"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -57,11 +59,11 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("password") || "Password"}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder={t("enterYourPassword") || "Enter your password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -73,15 +75,15 @@ const Login = () => {
               className="w-full bg-primary hover:bg-primary-hover text-primary-foreground" 
               disabled={loading}
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? (t("signingIn") || "Signing in...") : (t("signIn") || "Sign In")}
             </Button>
           </form>
           
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              {t("dontHaveAccount") || "Don't have an account?"}{" "}
               <Link to="/signup" className="text-primary font-medium hover:underline">
-                Sign up
+                {t("signUp") || "Sign up"}
               </Link>
             </p>
           </div>

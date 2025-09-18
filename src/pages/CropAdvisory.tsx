@@ -1,43 +1,68 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { ArrowLeft, TrendingUp, Sprout, DollarSign, Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { ArrowLeft, Sprout, DollarSign, Clock, TrendingUp, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
 const CropAdvisory = () => {
-  const recommendations = [
-    {
-      crop: "Cotton",
-      suitability: "Highly Suitable",
-      profit: "₹65,000",
-      duration: "120 days",
-      description: "Perfect match for your black soil and climate conditions. High market demand expected.",
-      reasons: ["Excellent soil compatibility", "Favorable weather conditions", "Good water availability", "Strong market prices"]
-    },
-    {
-      crop: "Soybean",
-      suitability: "Very Suitable",
-      profit: "₹45,000",
-      duration: "90 days",
-      description: "Great alternative crop with shorter growing period and good returns.",
-      reasons: ["Quick harvest cycle", "Disease resistant varieties available", "Good for soil health", "Stable market demand"]
-    },
-    {
-      crop: "Sunflower",
-      suitability: "Suitable",
-      profit: "₹35,000",
-      duration: "75 days",
-      description: "Low maintenance crop suitable for your water facility conditions.",
-      reasons: ["Drought tolerant", "Low water requirement", "Multiple harvest seasons", "Oil processing opportunities"]
-    }
-  ];
+  const { t } = useTranslation();
+  const { userInputData, selectCrop, selectedCrop } = useAuth();
+  const { language } = useLanguage();
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const getSuitabilityColor = (suitability: string) => {
+  const getSuitabilityColor = (suitability) => {
     switch (suitability) {
       case "Highly Suitable": return "text-green-600 bg-green-50 border-green-200";
       case "Very Suitable": return "text-blue-600 bg-blue-50 border-blue-200";
       case "Suitable": return "text-orange-600 bg-orange-50 border-orange-200";
       default: return "text-gray-600 bg-gray-50 border-gray-200";
     }
+  };
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!userInputData) {
+        setError("Please provide your farm details first");
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch('http://localhost:5001/api/crop-analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...userInputData, language }),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch recommendations: ${errorText}`);
+        }
+        const data = await response.json();
+        if (!data.recommendedCrops) {
+          throw new Error('No recommendations found in response');
+        }
+        setRecommendations(data.recommendedCrops);
+      } catch (err) {
+        console.error('Error fetching recommendations:', err);
+        setError(err.message || 'Unknown error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecommendations();
+  }, [userInputData]);
+
+  const handleSelectCrop = (cropName: string) => {
+    selectCrop(cropName);
+    toast.success(`Selected ${cropName} for farming plan`);
   };
 
   return (
@@ -48,14 +73,14 @@ const CropAdvisory = () => {
           <Button asChild variant="outline" size="sm">
             <Link to="/dashboard">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              {t('backToDashboard')}
             </Link>
           </Button>
           <div className="flex items-center gap-3">
             <div className="bg-primary/10 p-2 rounded-full">
               <Sprout className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="text-xl font-bold text-primary">Crop Advisory</h1>
+            <h1 className="text-xl font-bold text-primary">{t('cropAdvisory')}</h1>
           </div>
         </div>
       </header>
@@ -64,15 +89,28 @@ const CropAdvisory = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-primary mb-4">
-            AI-Powered Crop Recommendations
+            {t('aiPoweredRecommendations')}
           </h2>
           <p className="text-lg text-muted-foreground">
-            Based on your soil type, climate conditions, and farming preferences
+            {t('basedOnSoilClimate')}
           </p>
+          {selectedCrop && (
+            <div className="mt-4 p-4 bg-primary/10 rounded-lg inline-block">
+              <p className="text-primary font-semibold">
+                Selected Crop: {selectedCrop}
+              </p>
+            </div>
+          )}
         </div>
+
+        {loading && <p className="text-center text-primary">{t('loading')}</p>}
+        {error && <p className="text-center text-red-600">{error}</p>}
 
         {/* Recommendations */}
         <div className="space-y-6">
+          {recommendations.length === 0 && !loading && !error && (
+            <p className="text-center text-muted-foreground">{t('noRecommendations')}</p>
+          )}
           {recommendations.map((rec, index) => (
             <Card key={index} className="bg-card/80 backdrop-blur-sm shadow-lg">
               <CardHeader>
@@ -80,14 +118,14 @@ const CropAdvisory = () => {
                   <div>
                     <CardTitle className="text-2xl font-bold text-primary flex items-center gap-3">
                       <Sprout className="h-6 w-6" />
-                      {rec.crop}
+                      {rec.cropName}
                     </CardTitle>
                     <CardDescription className="text-lg mt-2">
-                      {rec.description}
+                      {rec.reasoning}
                     </CardDescription>
                   </div>
-                  <div className={`px-4 py-2 rounded-full border text-sm font-semibold ${getSuitabilityColor(rec.suitability)}`}>
-                    {rec.suitability}
+                  <div className={`px-4 py-2 rounded-full border text-sm font-semibold ${getSuitabilityColor(rec.suitability || '')}`}>
+                    {rec.suitability || t('suitabilityUnknown')}
                   </div>
                 </div>
               </CardHeader>
@@ -96,40 +134,48 @@ const CropAdvisory = () => {
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="bg-secondary/50 p-4 rounded-lg text-center">
                     <DollarSign className="h-6 w-6 text-primary mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-primary">{rec.profit}</div>
-                    <div className="text-sm text-muted-foreground">Expected Profit per Acre</div>
-                  </div>
-                  <div className="bg-secondary/50 p-4 rounded-lg text-center">
-                    <Clock className="h-6 w-6 text-primary mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-primary">{rec.duration}</div>
-                    <div className="text-sm text-muted-foreground">Growing Period</div>
+                    <div className="text-2xl font-bold text-primary">{rec.requiredInvestment || t('investmentUnknown')}</div>
+                    <div className="text-sm text-muted-foreground">{t('requiredInvestment')}</div>
                   </div>
                   <div className="bg-secondary/50 p-4 rounded-lg text-center">
                     <TrendingUp className="h-6 w-6 text-primary mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-primary">High</div>
-                    <div className="text-sm text-muted-foreground">Market Demand</div>
+                    <div className="text-2xl font-bold text-primary">{rec.expectedProfit || t('profitUnknown')}</div>
+                    <div className="text-sm text-muted-foreground">{t('expectedProfit')}</div>
                   </div>
-                </div>
-
-                {/* Reasons */}
-                <div>
-                  <h4 className="font-semibold text-lg mb-3 text-primary">Why this crop is recommended:</h4>
-                  <div className="grid md:grid-cols-2 gap-2">
-                    {rec.reasons.map((reason, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        <span className="text-muted-foreground">{reason}</span>
-                      </div>
-                    ))}
+                  <div className="bg-secondary/50 p-4 rounded-lg text-center">
+                    <CheckCircle className="h-6 w-6 text-primary mx-auto mb-2" />
+                    <div className="text-2xl font-bold text-primary">{t('high')}</div>
+                    <div className="text-sm text-muted-foreground">{t('suitability')}</div>
                   </div>
                 </div>
 
                 {/* Action Button */}
-                <Button asChild className="bg-primary hover:bg-primary-hover text-primary-foreground">
-                  <Link to="/crop-plan">
-                    Create Farming Plan for {rec.crop}
-                  </Link>
-                </Button>
+                <div className="flex gap-4">
+                  <Button
+                    onClick={() => handleSelectCrop(rec.cropName)}
+                    className={`flex-1 ${selectedCrop === rec.cropName ? 'bg-green-600 hover:bg-green-700' : 'bg-primary hover:bg-primary-hover'} text-primary-foreground`}
+                    disabled={selectedCrop === rec.cropName}
+                  >
+                    {selectedCrop === rec.cropName ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Selected
+                      </>
+                    ) : (
+                      <>
+                        <Sprout className="h-4 w-4 mr-2" />
+                        {t('selectCrop')}
+                      </>
+                    )}
+                  </Button>
+                  {selectedCrop === rec.cropName && (
+                    <Button asChild className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                      <Link to="/crop-plan">
+                        Create Farming Plan
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}

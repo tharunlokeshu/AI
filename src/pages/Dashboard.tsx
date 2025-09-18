@@ -2,65 +2,67 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { 
-  Sprout, 
-  Calendar, 
-  MapPin, 
-  Building2, 
-  CreditCard, 
+import { useTranslation } from "react-i18next";
+import {
+  Sprout,
+  Calendar,
+  MapPin,
+  Building2,
+  CreditCard,
   Camera,
   User,
-  LogOut 
+  LogOut
 } from "lucide-react";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const services = [
     {
-      title: "Crop Advisory",
-      description: "Get AI-powered crop recommendations based on your farm conditions",
+      title: t('cropAdvisory'),
+      description: t('getAiPoweredRecommendations'),
       icon: Sprout,
       link: "/crop-advisory",
       color: "text-green-600",
       bg: "bg-green-50"
     },
     {
-      title: "Crop Plan",
-      description: "Create detailed farming plans with step-by-step guidance",
+      title: t('cropPlan'),
+      description: t('createDetailedPlans'),
       icon: Calendar,
       link: "/crop-plan",
       color: "text-blue-600",
       bg: "bg-blue-50"
     },
     {
-      title: "Local Market & Vendor Details",
-      description: "Find nearby mandis and vendors with current prices",
+      title: t('localMarketVendorDetails'),
+      description: t('findNearbyMandis'),
       icon: MapPin,
       link: "/local-market",
       color: "text-orange-600",
       bg: "bg-orange-50"
     },
     {
-      title: "Government Organizations",
-      description: "Connect with Rythu Bharosa Kendras and agricultural offices",
+      title: t('governmentOrganizations'),
+      description: t('connectWithRythuBharosa'),
       icon: Building2,
       link: "/government",
       color: "text-purple-600",
       bg: "bg-purple-50"
     },
     {
-      title: "Bank Loan Schemes",
-      description: "Explore agricultural loan schemes and financing options",
+      title: t('bankLoanSchemes'),
+      description: t('exploreAgriculturalLoans'),
       icon: CreditCard,
       link: "/bank-loans",
       color: "text-red-600",
       bg: "bg-red-50"
     },
     {
-      title: "Crop Disease Detection",
-      description: "Upload crop images to detect diseases and get treatment advice",
+      title: t('cropDiseaseDetection'),
+      description: t('uploadImagesDetectDiseases'),
       icon: Camera,
       link: "/disease-detection",
       color: "text-indigo-600",
@@ -77,7 +79,7 @@ const Dashboard = () => {
             <div className="bg-primary/10 p-2 rounded-full">
               <Sprout className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="text-xl font-bold text-primary">Smart Crop Advisory</h1>
+            <h1 className="text-xl font-bold text-primary">{t('smartCropAdvisory')}</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
@@ -94,7 +96,7 @@ const Dashboard = () => {
               className="text-muted-foreground hover:text-foreground"
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              {t('logout')}
             </Button>
           </div>
         </div>
@@ -104,10 +106,10 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-primary mb-4">
-            Welcome to Your Farm Dashboard
+            {t('welcomeToFarmDashboard')}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choose from our comprehensive agricultural services to optimize your farming operations
+            {t('chooseComprehensiveServices')}
           </p>
         </div>
 
@@ -127,12 +129,12 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button 
-                  asChild 
+                <Button
+                  asChild
                   className="w-full bg-primary hover:bg-primary-hover text-primary-foreground"
                 >
                   <Link to={service.link}>
-                    Access Service
+                    {t('accessService')}
                   </Link>
                 </Button>
               </CardContent>

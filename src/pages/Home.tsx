@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Sprout,
   Phone,
@@ -8,13 +9,20 @@ import {
   Twitter,
   MessageSquare,
   Menu,
-  X
+  X,
+  Globe
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import heroImage from "../assets/ai.jpg";
 
 const Home = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { language, setLanguage } = useLanguage();
+  const { t, i18n } = useTranslation();
+
+  // Language change is handled by LanguageContext
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10">
@@ -33,27 +41,47 @@ const Home = () => {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               <Link to="/" className="text-foreground hover:text-primary transition-colors">
-                Home
+                {t('home')}
               </Link>
               <Link to="/features" className="text-muted-foreground hover:text-primary transition-colors">
-                Features
+                {t('features')}
               </Link>
               <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                About
+                {t('about')}
               </Link>
               <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
-                Contact
+                {t('contact')}
               </Link>
             </div>
 
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
               <Button asChild variant="ghost" className="text-primary hover:text-primary-hover">
-                <Link to="/login">Login</Link>
+                <Link to="/login">{t('login')}</Link>
               </Button>
               <Button asChild className="bg-primary hover:bg-primary-hover text-primary-foreground">
-                <Link to="/signup">Sign Up</Link>
+                <Link to="/signup">{t('signup')}</Link>
               </Button>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="w-40 bg-background/50">
+                  <Globe className="h-4 w-4 mr-2 text-primary" />
+                  <SelectValue placeholder={t('selectLanguage')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="hi">हिंदी</SelectItem>
+                  <SelectItem value="bn">বাংলা</SelectItem>
+                  <SelectItem value="te">తెలుగు</SelectItem>
+                  <SelectItem value="mr">मराठी</SelectItem>
+                  <SelectItem value="ta">தமிழ்</SelectItem>
+                  <SelectItem value="ur">اردو</SelectItem>
+                  <SelectItem value="gu">ગુજરાતી</SelectItem>
+                  <SelectItem value="kn">ಕನ್ನಡ</SelectItem>
+                  <SelectItem value="or">ଓଡ଼ିଆ</SelectItem>
+                  <SelectItem value="ml">മലയാളം</SelectItem>
+                  <SelectItem value="pa">ਪੰਜਾਬੀ</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Mobile Menu Button */}
@@ -69,24 +97,46 @@ const Home = () => {
           {isMobileMenuOpen && (
             <div className="md:hidden border-t border-border/40 py-4 space-y-4">
               <Link to="/" className="block text-foreground hover:text-primary transition-colors">
-                Home
+                {t('home')}
               </Link>
               <Link to="/features" className="block text-muted-foreground hover:text-primary transition-colors">
-                Features
+                {t('features')}
               </Link>
               <Link to="/about" className="block text-muted-foreground hover:text-primary transition-colors">
-                About
+                {t('about')}
               </Link>
               <Link to="/contact" className="block text-muted-foreground hover:text-primary transition-colors">
-                Contact
+                {t('contact')}
               </Link>
               <div className="flex space-x-4 pt-4 border-t border-border/40">
                 <Button asChild variant="ghost" className="text-primary hover:text-primary-hover">
-                  <Link to="/login">Login</Link>
+                  <Link to="/login">{t('login')}</Link>
                 </Button>
                 <Button asChild className="bg-primary hover:bg-primary-hover text-primary-foreground">
-                  <Link to="/signup">Sign Up</Link>
+                  <Link to="/signup">{t('signup')}</Link>
                 </Button>
+              </div>
+              <div className="pt-4 border-t border-border/40">
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="w-full bg-background/50">
+                    <Globe className="h-4 w-4 mr-2 text-primary" />
+                    <SelectValue placeholder={t('selectLanguage')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="hi">हिंदी</SelectItem>
+                    <SelectItem value="bn">বাংলা</SelectItem>
+                    <SelectItem value="te">తెలుగు</SelectItem>
+                    <SelectItem value="mr">मराठी</SelectItem>
+                    <SelectItem value="ta">தமிழ்</SelectItem>
+                    <SelectItem value="ur">اردو</SelectItem>
+                    <SelectItem value="gu">ગુજરાતી</SelectItem>
+                    <SelectItem value="kn">ಕನ್ನಡ</SelectItem>
+                    <SelectItem value="or">ଓଡ଼ିଆ</SelectItem>
+                    <SelectItem value="ml">മലയാളം</SelectItem>
+                    <SelectItem value="pa">ਪੰਜਾਬੀ</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
@@ -107,16 +157,16 @@ const Home = () => {
           <div className="space-y-8 max-w-4xl mx-auto">
             <div className="space-y-6 animate-fade-in">
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-                Grow Smarter with AI
+                {t('heroTitle')}
               </h1>
               <p className="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed text-white/90">
-                Personalized crop advice, plans, and market insights for farmers
+                {t('heroSubtitle')}
               </p>
             </div>
 
             <div className="pt-8">
               <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground px-12 py-6 text-xl font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                <Link to="/login">Get Started</Link>
+                <Link to="/login">{t('getStarted')}</Link>
               </Button>
             </div>
           </div>

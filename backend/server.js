@@ -14,6 +14,10 @@ import path from 'path';
 import PDFDocument from 'pdfkit';
 import { scrapeAgriVendors } from './scrape_agri_vendors_improved.js';
 
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const port = 5002;
 
@@ -728,24 +732,80 @@ app.post('/api/government-organizations', async (req, res) => {
 });
 
 // Bank Loans API endpoint updated to serve scraped data
-app.post('/api/bank-loans', (req, res) => {
-  const { location, crop } = req.body;
+app.post('/api/bank-loans', async (req, res) => {
+  const { location, crop, landSize, landType } = req.body;
+  const { format } = req.query;
   if (!location || !crop) return res.status(400).json({ error: 'Missing location or crop' });
 
-  const filePath = path.join(__dirname, 'bank_loans.json');
-  fs.readFile(filePath, 'utf8', (err, data) => {
-    if (err) {
-      console.error('Error reading bank_loans.json:', err.message);
-      return res.status(500).json({ error: 'Failed to load bank loan schemes' });
-    }
-    try {
-      const schemes = JSON.parse(data);
+  // Construct Gemini prompt for bank loan schemes
+  const prompt = `You are an expert agricultural finance advisor. Based on the following details:
+Location: ${location}
+Crop: ${crop}
+Land Size: ${landSize} acres
+Land Type: ${landType}
+
+Provide 4-6 relevant bank loan schemes or government subsidy programs available in this region for the crop and land type specified.
+For each scheme, provide the following details in JSON format:
+- scheme: Name of the bank or scheme
+- description: What they offer in the region
+- interestRate: Interest rate(s) and conditions
+- loanAmount: Typical loan amount available
+- apply: How to apply
+- source: Source or bank name
+
+Return ONLY a JSON array of these scheme objects without any additional text or explanation.
+`;
+
+  try {
+    const schemes = await callGeminiAPI(prompt);
+
+    if (format === 'pdf') {
+      // Generate PDF
+      const doc = new PDFDocument();
+      const buffers = [];
+
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        const pdfBuffer = Buffer.concat(buffers);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="bank_loans_report_${location.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
+        res.send(pdfBuffer);
+      });
+
+      doc.fontSize(16).text('Agricultural Finance Report', { align: 'center' });
+      doc.moveDown();
+
+      doc.fontSize(12).text(`Location: ${location}`);
+      doc.text(`Land Size: ${landSize} acres`);
+      doc.text(`Land Type: ${landType}`);
+      doc.moveDown();
+
+      doc.fontSize(14).text('Local Bank / RRB / State-Bank Interest Rate Info', { underline: true });
+      doc.moveDown();
+
+      schemes.forEach((scheme, idx) => {
+        doc.fontSize(12).text(`${idx + 1}. ${scheme.scheme}`);
+        doc.text(`   What they offer: ${scheme.description}`);
+        doc.text(`   Interest Rate: ${scheme.interestRate}`);
+        doc.text(`   How it applies: Applicable for ${landSize} acres of ${landType} land; ${scheme.loanAmount} available.`);
+        doc.moveDown();
+      });
+
+      doc.fontSize(14).text('What This Means for You', { underline: true });
+      doc.moveDown();
+      doc.fontSize(12).text('- Short-term crop loans: Options like Kisan Credit Card are ideal for immediate needs.');
+      doc.text('- Term loans: Schemes like AIF provide long-term financing.');
+      doc.text('- Government subsidies: KCC, AIF, PM-KISAN.');
+      doc.text('- Risks: Late repayment penalties, collateral requirements.');
+
+      doc.end();
+    } else {
       res.json({ schemes });
-    } catch (parseErr) {
-      console.error('Error parsing bank_loans.json:', parseErr.message);
-      res.status(500).json({ error: 'Invalid bank loan schemes data' });
     }
-  });
+  } catch (error) {
+    console.error('Gemini API error:', error.message);
+    res.status(500).json({ error: 'Failed to generate bank loan schemes' });
+  }
 });
 
 // -------------------------

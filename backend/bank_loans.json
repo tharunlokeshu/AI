@@ -1,29 +1,38 @@
 [
   {
-    "scheme": "Kisan Credit Card Scheme",
-    "crop": "Groundnut",
-    "loan_amount": "₹50,000 - ₹3,00,000",
-    "interest_rate": "4% - 7%",
-    "apply": "Apply at cooperative banks or RBI authorized banks",
-    "description": "Kisan Credit Card scheme provides timely and adequate credit to farmers for their cultivation needs.",
-    "source": "Government of India"
+    "scheme": "Kisan Credit Card Scheme - Andhra Pradesh Grameena Bank",
+    "crop": "Paddy",
+    "loanAmount": "₹50,000 - ₹3,00,000",
+    "interestRate": "4% - 7% (with 3% subvention for prompt repayment)",
+    "apply": "Apply at Andhra Pradesh Grameena Bank branches or cooperative banks",
+    "description": "Provides timely credit for paddy cultivation needs including seeds, fertilizers, and pesticides in Andhra Pradesh.",
+    "source": "Andhra Pradesh Grameena Bank"
   },
   {
-    "scheme": "Agriculture Infrastructure Fund",
-    "crop": "Groundnut",
-    "loan_amount": "₹2,00,000 - ₹10,00,000",
-    "interest_rate": "7% - 9%",
-    "apply": "Apply through NABARD portal or bank branches",
-    "description": "AIF provides medium to long-term debt financing for investment in viable projects for post-harvest management.",
-    "source": "NABARD"
+    "scheme": "Agriculture Infrastructure Fund - Saptagiri Grameena Bank",
+    "crop": "Paddy",
+    "loanAmount": "₹2,00,000 - ₹10,00,000",
+    "interestRate": "7% - 9% (with possible subvention)",
+    "apply": "Apply through NABARD portal or Saptagiri Grameena Bank branches",
+    "description": "Medium to long-term financing for post-harvest management and irrigation upgrades for paddy in Andhra Pradesh.",
+    "source": "Saptagiri Grameena Bank"
   },
   {
-    "scheme": "PM Kisan Samman Nidhi",
-    "crop": "Groundnut",
-    "loan_amount": "₹1,00,000 - ₹6,00,000",
-    "interest_rate": "6% - 8%",
-    "apply": "Apply through PM Kisan portal or bank branches",
-    "description": "PM-KISAN provides income support to all landholding farmers' families across the country.",
-    "source": "Government of India"
+    "scheme": "PM Kisan Samman Nidhi - State Bank of India",
+    "crop": "Paddy",
+    "loanAmount": "₹1,00,000 - ₹6,00,000",
+    "interestRate": "6% - 8%",
+    "apply": "Apply through PM Kisan portal or SBI branches in Andhra Pradesh",
+    "description": "Income support scheme for paddy farmers in Andhra Pradesh, providing direct benefit transfers.",
+    "source": "State Bank of India"
+  },
+  {
+    "scheme": "Modified Interest Subvention Scheme - Central Bank",
+    "crop": "Paddy",
+    "loanAmount": "₹50,000 - ₹3,00,000",
+    "interestRate": "7% (with 3% subvention)",
+    "apply": "Apply at Central Bank branches in Andhra Pradesh",
+    "description": "Interest subvention on crop loans for paddy, reducing effective rate for timely repayment in Andhra Pradesh.",
+    "source": "Central Bank of India"
   }
 ]

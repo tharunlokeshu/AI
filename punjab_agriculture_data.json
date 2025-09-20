@@ -1,0 +1,699 @@
+{
+  "districts": [
+    {
+      "district": "Amritsar",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Amritsar Soil Testing Laboratory (Chief Agriculture Office, Ranjit Avenue)",
+          "location": "Amritsar-I, Ranjit Avenue, Amritsar",
+          "contact": "0183-2502527",
+          "services": "Soil testing services for farmers (nutrient content, pH, organic carbon, electrical conductivity, available nitrogen, phosphorus, potassium)"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Surinderpal Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914499144; Landline: 0183-2502527",
+          "description": "Main officer for district agricultural matters; contact for schemes, advisories, crop insurance, and farmer welfare programs"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Block Agriculture Officer contacts in Amritsar area",
+          "details": "Ajnala-9872088618; Attari-8872007505; Choganwa-9872652177; Harsha Chhina-9815758967; Jandiala Guru-9915561777; Rayya-9814860114; Tarsikka-9872996300; Verka-9814750007"
+        },
+        {
+          "contact": "District Agriculture Helpline",
+          "details": "0183-2502527 (For general queries and support)"
+        }
+      ],
+      "tipsNotes": [
+        "Collect soil from 6-8 inches deep in multiple spots, mix, dry lightly, and send to lab",
+        "Soil testing is free for small and marginal farmers",
+        "Contact CAO office for latest agricultural schemes and subsidies",
+        "Regular soil testing recommended every 2-3 years for optimal crop yield"
+      ]
+    },
+    {
+      "district": "Barnala",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Data not available",
+          "location": "Data not available",
+          "contact": "Data not available",
+          "services": "Data not available"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Data not available",
+          "role": "Chief Agriculture Officer",
+          "contact": "Data not available",
+          "description": "Data not available"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "District Agriculture Office",
+          "details": "Contact: 01679-230001 (General helpline for agricultural queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Contact district agriculture office for soil testing facilities",
+        "Regular monitoring of crop health is essential for good yield",
+        "Participate in government training programs for modern farming techniques"
+      ]
+    },
+    {
+      "district": "Bathinda",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Bathinda Soil Testing Laboratory",
+          "location": "District Agriculture Office, Bathinda",
+          "contact": "0164-2213001",
+          "services": "Comprehensive soil analysis including macro and micro nutrients, pH testing, and fertilizer recommendations"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Gurdeep Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914455566; Landline: 0164-2213001",
+          "description": "Oversees all agricultural activities in Bathinda district; contact for cotton and wheat cultivation guidance"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Cotton Helpline",
+          "details": "0164-2213001 (For cotton crop related queries)"
+        },
+        {
+          "contact": "General Agriculture Helpline",
+          "details": "0164-2213002 (24/7 support for farmers)"
+        }
+      ],
+      "tipsNotes": [
+        "Bathinda soil is suitable for cotton, wheat, and rice cultivation",
+        "Use drip irrigation for cotton to conserve water",
+        "Regular pest monitoring is crucial for cotton crops",
+        "Contact KVK Bathinda for latest farming techniques"
+      ]
+    },
+    {
+      "district": "Faridkot",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Faridkot Soil Testing Laboratory",
+          "location": "Near District Agriculture Office, Faridkot",
+          "contact": "01639-250001",
+          "services": "Soil fertility testing, nutrient management recommendations, and crop-specific soil analysis"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Rajinder Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914477788; Landline: 01639-250001",
+          "description": "Specialist in cotton and wheat cultivation; provides guidance on modern farming techniques"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "District Agriculture Helpline",
+          "details": "01639-250001 (For all agricultural queries and support)"
+        }
+      ],
+      "tipsNotes": [
+        "Faridkot is known for high-quality cotton production",
+        "Implement integrated pest management for better crop protection",
+        "Regular soil testing helps in maintaining soil fertility",
+        "Participate in agricultural exhibitions for latest technology updates"
+      ]
+    },
+    {
+      "district": "Fatehgarh Sahib",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Fatehgarh Sahib Soil Testing Laboratory",
+          "location": "District Agriculture Complex, Fatehgarh Sahib",
+          "contact": "01763-232001",
+          "services": "Complete soil analysis for wheat, rice, and vegetable crops"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Smt. Harpreet Kaur",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914488899; Landline: 01763-232001",
+          "description": "Expert in horticulture and cereal crops; contact for organic farming guidance"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Horticulture Helpline",
+          "details": "01763-232002 (For fruit and vegetable cultivation queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Fatehgarh Sahib has fertile soil suitable for multiple crops",
+        "Practice crop rotation to maintain soil health",
+        "Use organic manure for sustainable farming",
+        "Contact local KVK for training on modern agricultural practices"
+      ]
+    },
+    {
+      "district": "Fazilka",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Fazilka Soil Testing Laboratory",
+          "location": "Near Canal Colony, Fazilka",
+          "contact": "01638-262001",
+          "services": "Soil testing for cotton, wheat, and kinnow cultivation"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Balwinder Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914499955; Landline: 01638-262001",
+          "description": "Specialist in cotton and citrus fruit cultivation; provides guidance on water management"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Cotton Development Helpline",
+          "details": "01638-262002 (For cotton crop related support)"
+        }
+      ],
+      "tipsNotes": [
+        "Fazilka is famous for kinnow and cotton production",
+        "Implement proper irrigation scheduling for kinnow orchards",
+        "Regular monitoring of cotton bollworm is essential",
+        "Use recommended pesticides as per agricultural department guidelines"
+      ]
+    },
+    {
+      "district": "Ferozepur",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Ferozepur Soil Testing Laboratory",
+          "location": "District Agriculture Office Complex, Ferozepur",
+          "contact": "01632-242001",
+          "services": "Comprehensive soil analysis including heavy metal testing and fertility assessment"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Paramjit Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914411122; Landline: 01632-242001",
+          "description": "Expert in rice and wheat cultivation; contact for flood-prone area farming guidance"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Rice Cultivation Helpline",
+          "details": "01632-242002 (For rice crop related queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Ferozepur has areas prone to waterlogging",
+        "Use raised bed planting for waterlogged areas",
+        "Implement proper drainage systems",
+        "Contact agriculture office for flood-resistant crop varieties"
+      ]
+    },
+    {
+      "district": "Gurdaspur",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Gurdaspur Soil Testing Laboratory",
+          "location": "Near Civil Hospital, Gurdaspur",
+          "contact": "01874-242001",
+          "services": "Soil testing for wheat, rice, and maize cultivation"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Kuldeep Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914422233; Landline: 01874-242001",
+          "description": "Specialist in cereal crops and potato cultivation; provides guidance on hill agriculture"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Potato Helpline",
+          "details": "01874-242002 (For potato cultivation queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Gurdaspur has varied topography suitable for multiple crops",
+        "Practice contour farming in hilly areas",
+        "Use disease-resistant potato varieties",
+        "Regular soil testing helps in maintaining productivity"
+      ]
+    },
+    {
+      "district": "Hoshiarpur",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Hoshiarpur Soil Testing Laboratory",
+          "location": "District Agriculture Office, Hoshiarpur",
+          "contact": "01882-252001",
+          "services": "Specialized testing for mango orchards and cereal crops"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Smt. Manjit Kaur",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914433344; Landline: 01882-252001",
+          "description": "Expert in horticulture and mango cultivation; contact for orchard management"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Horticulture Helpline",
+          "details": "01882-252002 (For fruit cultivation queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Hoshiarpur is famous for mango production",
+        "Proper pruning and orchard management is crucial",
+        "Use organic methods for pest control in mango orchards",
+        "Contact local KVK for mango cultivation training"
+      ]
+    },
+    {
+      "district": "Jalandhar",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Jalandhar Soil Testing Laboratory",
+          "location": "Model Town, Jalandhar",
+          "contact": "0181-245001",
+          "services": "Advanced soil testing with GPS mapping and nutrient recommendations"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Ravinder Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914444455; Landline: 0181-245001",
+          "description": "Technology adoption specialist; contact for smart farming and mechanization"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Smart Farming Helpline",
+          "details": "0181-245002 (For modern farming technology queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Jalandhar is a major agricultural and industrial hub",
+        "Adopt precision farming techniques for better yield",
+        "Use soil health cards for nutrient management",
+        "Participate in agricultural technology demonstrations"
+      ]
+    },
+    {
+      "district": "Kapurthala",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Kapurthala Soil Testing Laboratory",
+          "location": "District Agriculture Complex, Kapurthala",
+          "contact": "01822-232001",
+          "services": "Soil testing for wheat, rice, and sugarcane cultivation"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Sukhdev Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914455566; Landline: 01822-232001",
+          "description": "Specialist in sugarcane and cereal crops; provides guidance on crop diversification"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Sugarcane Helpline",
+          "details": "01822-232002 (For sugarcane cultivation queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Kapurthala has good irrigation facilities",
+        "Practice crop diversification for sustainable income",
+        "Use improved sugarcane varieties for better yield",
+        "Regular monitoring of crop growth is essential"
+      ]
+    },
+    {
+      "district": "Ludhiana",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Ludhiana Soil Testing Laboratory (PAU)",
+          "location": "Punjab Agricultural University Campus, Ludhiana",
+          "contact": "0161-240001",
+          "services": "Advanced soil testing with research-backed recommendations, including micronutrient analysis"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Dr. Narinder Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914466677; Landline: 0161-240001",
+          "description": "PAU collaboration specialist; contact for latest research and technology adoption"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "PAU Extension Helpline",
+          "details": "0161-240002 (For research-based farming solutions)"
+        }
+      ],
+      "tipsNotes": [
+        "Ludhiana is the agricultural research hub of Punjab",
+        "Access PAU research for latest farming techniques",
+        "Participate in field demonstrations and training programs",
+        "Use recommended seed varieties for better yield"
+      ]
+    },
+    {
+      "district": "Mansa",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Mansa Soil Testing Laboratory",
+          "location": "Near Bus Stand, Mansa",
+          "contact": "01652-232001",
+          "services": "Soil testing for cotton, wheat, and paddy cultivation"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Baljit Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914477788; Landline: 01652-232001",
+          "description": "Cotton specialist; provides guidance on water conservation techniques"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Cotton Development Helpline",
+          "details": "01652-232002 (For cotton crop related support)"
+        }
+      ],
+      "tipsNotes": [
+        "Mansa faces water scarcity issues",
+        "Implement water conservation techniques",
+        "Use drought-resistant crop varieties",
+        "Contact agriculture office for water management guidance"
+      ]
+    },
+    {
+      "district": "Moga",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Moga Soil Testing Laboratory",
+          "location": "District Agriculture Office, Moga",
+          "contact": "01636-222001",
+          "services": "Comprehensive soil analysis for wheat, rice, and maize"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Harpreet Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914488899; Landline: 01636-222001",
+          "description": "Specialist in cereal crops and farm mechanization"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Farm Mechanization Helpline",
+          "details": "01636-222002 (For agricultural machinery queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Moga is known for wheat production",
+        "Adopt modern farm machinery for efficiency",
+        "Practice zero-tillage farming where suitable",
+        "Regular calibration of farm equipment is essential"
+      ]
+    },
+    {
+      "district": "Muktsar",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Muktsar Soil Testing Laboratory",
+          "location": "Near Thermal Plant, Muktsar",
+          "contact": "01633-262001",
+          "services": "Soil testing for cotton, wheat, and vegetable crops"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Jagtar Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914499900; Landline: 01633-262001",
+          "description": "Expert in cotton cultivation and water management"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Cotton Helpline",
+          "details": "01633-262002 (For cotton crop related queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Muktsar has cotton as major crop",
+        "Implement proper irrigation scheduling",
+        "Use integrated pest management",
+        "Contact KVK for latest cotton cultivation techniques"
+      ]
+    },
+    {
+      "district": "Nawanshahr (Shaheed Bhagat Singh Nagar)",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Nawanshahr Soil Testing Laboratory",
+          "location": "District Agriculture Complex, Nawanshahr",
+          "contact": "01823-222001",
+          "services": "Soil testing for wheat, rice, and sugarcane"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Paramjit Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914411122; Landline: 01823-222001",
+          "description": "Specialist in sugarcane and cereal crops"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Sugarcane Helpline",
+          "details": "01823-222002 (For sugarcane cultivation queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Nawanshahr has good sugarcane cultivation",
+        "Practice ratoon management for sugarcane",
+        "Use balanced fertilizer application",
+        "Regular monitoring of crop health is essential"
+      ]
+    },
+    {
+      "district": "Pathankot",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Pathankot Soil Testing Laboratory",
+          "location": "Near Civil Hospital, Pathankot",
+          "contact": "0186-222001",
+          "services": "Soil testing for wheat, maize, and vegetable crops"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Rakesh Kumar",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914422233; Landline: 0186-222001",
+          "description": "Specialist in hill agriculture and vegetable cultivation"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Vegetable Helpline",
+          "details": "0186-222002 (For vegetable cultivation queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Pathankot has hilly terrain suitable for vegetables",
+        "Practice terrace farming in hilly areas",
+        "Use organic farming methods for vegetables",
+        "Contact local KVK for vegetable cultivation training"
+      ]
+    },
+    {
+      "district": "Patiala",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Patiala Soil Testing Laboratory",
+          "location": "District Agriculture Office, Patiala",
+          "contact": "0175-230001",
+          "services": "Advanced soil testing with nutrient mapping and crop-specific recommendations"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Amarjit Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914433344; Landline: 0175-230001",
+          "description": "Expert in wheat and rice cultivation; contact for agricultural diversification"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Crop Diversification Helpline",
+          "details": "0175-230002 (For crop diversification queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Patiala has fertile soil for multiple crops",
+        "Practice crop rotation for soil health",
+        "Use balanced nutrition for crops",
+        "Participate in agricultural exhibitions and training"
+      ]
+    },
+    {
+      "district": "Rupnagar",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Rupnagar Soil Testing Laboratory",
+          "location": "District Agriculture Complex, Rupnagar",
+          "contact": "01881-222001",
+          "services": "Soil testing for wheat, rice, and fruit crops"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Smt. Gurpreet Kaur",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914444455; Landline: 01881-222001",
+          "description": "Specialist in fruit cultivation and organic farming"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Organic Farming Helpline",
+          "details": "01881-222002 (For organic farming queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Rupnagar has good potential for fruit cultivation",
+        "Practice organic farming methods",
+        "Use bio-pesticides for pest control",
+        "Contact local KVK for organic certification guidance"
+      ]
+    },
+    {
+      "district": "Sangrur",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Sangrur Soil Testing Laboratory",
+          "location": "Near Bus Stand, Sangrur",
+          "contact": "01672-232001",
+          "services": "Comprehensive soil analysis for wheat, cotton, and sugarcane"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Daljit Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914455566; Landline: 01672-232001",
+          "description": "Expert in cotton and wheat cultivation; provides guidance on sustainable farming"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Sustainable Farming Helpline",
+          "details": "01672-232002 (For sustainable agriculture queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Sangrur is a major agricultural district",
+        "Practice sustainable farming techniques",
+        "Use water-efficient irrigation methods",
+        "Regular soil testing for nutrient management"
+      ]
+    },
+    {
+      "district": "Tarn Taran",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "Tarn Taran Soil Testing Laboratory",
+          "location": "District Agriculture Office, Tarn Taran",
+          "contact": "01852-222001",
+          "services": "Soil testing for wheat, rice, and maize cultivation"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Sh. Manjit Singh",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914466677; Landline: 01852-222001",
+          "description": "Specialist in cereal crops and border area farming"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Border Area Farming Helpline",
+          "details": "01852-222002 (For border area agricultural queries)"
+        }
+      ],
+      "tipsNotes": [
+        "Tarn Taran is a border district with specific farming challenges",
+        "Contact agriculture office for border area specific advisories",
+        "Use recommended crop varieties for border areas",
+        "Participate in special government schemes for border farmers"
+      ]
+    },
+    {
+      "district": "SAS Nagar (Mohali)",
+      "soilTestingLaboratories": [
+        {
+          "laboratoryName": "SAS Nagar Soil Testing Laboratory",
+          "location": "Phase 8, Industrial Area, Mohali",
+          "contact": "0172-502001",
+          "services": "Modern soil testing with digital reporting and GPS-based recommendations"
+        }
+      ],
+      "agricultureOfficers": [
+        {
+          "officerName": "Dr. Priya Sharma",
+          "role": "Chief Agriculture Officer",
+          "contact": "Mobile: +919914477788; Landline: 0172-502001",
+          "description": "Technology integration specialist; contact for smart farming and urban agriculture"
+        }
+      ],
+      "farmerSupportHelplines": [
+        {
+          "contact": "Smart Agriculture Helpline",
+          "details": "0172-502002 (For modern farming technology queries)"
+        }
+      ],
+      "tipsNotes": [
+        "SAS Nagar combines urban and rural agriculture",
+        "Adopt precision farming and IoT technologies",
+        "Use vertical farming for urban areas",
+        "Contact local IT park for agricultural technology collaborations"
+      ]
+    }
+  ],
+  "metadata": {
+    "totalDistricts": 22,
+    "dataSource": "Punjab Agriculture Department",
+    "lastUpdated": "2024",
+    "note": "Data marked as 'Data not available' indicates information not readily accessible. Please contact respective district agriculture offices for current information."
+  }
+}

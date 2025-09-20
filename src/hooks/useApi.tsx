@@ -17,9 +17,15 @@ export function useApi<T>() {
     setState({ data: null, loading: true, error: null });
 
     try {
+      // Default to GET method if not specified
+      const method = options?.method || 'GET';
+
       const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
         ...options,
       });
 

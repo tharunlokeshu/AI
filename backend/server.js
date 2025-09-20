@@ -192,7 +192,7 @@ async function fetchAgriculturalVendors(location, search_radius_meters = 2000, m
     console.error('Overpass API fetch error:', error.message);
     // Fallback to scraping existing scrapeVendors function and format as plain text table
 
-    const scrapedVendors = await scrapeVendors(location);
+    const scrapedVendors = await scrapeAgriVendors(location);
     if (scrapedVendors.length === 0) {
       return `No agricultural vendors found in ${location}.`;
     }
@@ -651,7 +651,7 @@ app.post('/api/local-market', async (req, res) => {
   if (!location) return res.status(400).json({ error: 'Missing location' });
 
   try {
-    const vendors = await scrapeVendors(location, crop);
+    const vendors = await scrapeAgriVendors(location, crop);
 
     // If no vendors found from scraping, return mock data for demo
     if (vendors.length === 0) {
@@ -683,53 +683,7 @@ app.post('/api/local-market', async (req, res) => {
   }
 });
 
-// Government Organizations
-app.post('/api/government-organizations', async (req, res) => {
-  const { location } = req.body;
-  if (!location) return res.status(400).json({ error: 'Missing location' });
 
-  try {
-    const organizations = await scrapeGovernmentOrgs(location);
-
-    // If no organizations found from scraping, return mock data for demo
-    if (organizations.length === 0) {
-      const mockOrganizations = [
-        {
-          name: `${location} Agriculture Department`,
-          address: `${location} Government Complex, Agriculture Wing`,
-          contact: '+91-9876543210'
-        },
-        {
-          name: `${location} Farmers Welfare Office`,
-          address: `${location} District Administration Building`,
-          contact: '+91-9876543211'
-        },
-        {
-          name: `${location} Ministry of Agriculture Extension Services`,
-          address: `${location} Agriculture Research Center`,
-          contact: '+91-9876543212'
-        },
-        {
-          name: `${location} Government Schemes Helpline`,
-          address: `${location} Agriculture Board Office`,
-          contact: '+91-9876543213'
-        },
-        {
-          name: `${location} Farmers Cooperative Society`,
-          address: `${location} Cooperative Building`,
-          contact: '+91-9876543214'
-        }
-      ];
-      console.log('Returning mock organizations as scraping found no results');
-      res.json({ organizations: mockOrganizations });
-    } else {
-      res.json({ organizations });
-    }
-  } catch (error) {
-    console.error('Error fetching government organizations:', error.message);
-    res.json({ organizations: [] });
-  }
-});
 
 // Bank Loans API endpoint updated to serve scraped data
 app.post('/api/bank-loans', async (req, res) => {
@@ -805,6 +759,368 @@ Return ONLY a JSON array of these scheme objects without any additional text or 
   } catch (error) {
     console.error('Gemini API error:', error.message);
     res.status(500).json({ error: 'Failed to generate bank loan schemes' });
+  }
+});
+
+// -------------------------
+// Government Organizations API Endpoint (Dataset-based)
+// -------------------------
+app.get('/api/government-organizations', (req, res) => {
+  try {
+    const { location, district } = req.query;
+
+    if (!location && !district) {
+      return res.status(400).json({
+        error: 'Location or district parameter is required',
+        usage: 'Use ?location=Amritsar or ?district=Amritsar'
+      });
+    }
+
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    // Find district (try both location and district parameters)
+    const searchDistrict = (district || location).toLowerCase();
+    const districtData = punjabData.districts.find(d =>
+      d.district.toLowerCase() === searchDistrict ||
+      d.district.toLowerCase().includes(searchDistrict) ||
+      searchDistrict.includes(d.district.toLowerCase())
+    );
+
+    if (!districtData) {
+      return res.status(404).json({
+        error: 'District not found',
+        availableDistricts: punjabData.districts.map(d => d.district),
+        searchedFor: district || location
+      });
+    }
+
+    // Structure the response with all government organizations
+    const governmentOrganizations = {
+      district: districtData.district,
+      soilTestingLaboratories: districtData.soilTestingLaboratories.filter(lab =>
+        lab.laboratoryName !== 'Data not available'
+      ),
+      agricultureOfficers: districtData.agricultureOfficers.filter(officer =>
+        officer.officerName !== 'Data not available'
+      ),
+      farmerSupportHelplines: districtData.farmerSupportHelplines,
+      tipsNotes: districtData.tipsNotes,
+      metadata: {
+        dataSource: 'Punjab Agriculture Department Dataset',
+        lastUpdated: punjabData.metadata.lastUpdated,
+        searchQuery: district || location
+      }
+    };
+
+    res.json(governmentOrganizations);
+  } catch (error) {
+    console.error('Error fetching government organizations:', error.message);
+    res.status(500).json({
+      error: 'Failed to fetch government organizations',
+      details: error.message
+    });
+  }
+});
+
+// Search government organizations across all districts
+app.get('/api/government-organizations/search', (req, res) => {
+  try {
+    const { q, type } = req.query;
+
+    if (!q) {
+      return res.status(400).json({
+        error: 'Search query is required',
+        usage: 'Use ?q=amritsar or ?q=lab&type=soil'
+      });
+    }
+
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    const results = [];
+
+    punjabData.districts.forEach(district => {
+      // Search in soil testing laboratories
+      if (!type || type === 'soil' || type === 'lab') {
+        district.soilTestingLaboratories.forEach(lab => {
+          if (lab.laboratoryName.toLowerCase().includes(q.toLowerCase()) ||
+              lab.location.toLowerCase().includes(q.toLowerCase())) {
+            results.push({
+              district: district.district,
+              type: 'Soil Testing Laboratory',
+              name: lab.laboratoryName,
+              location: lab.location,
+              contact: lab.contact,
+              services: lab.services
+            });
+          }
+        });
+      }
+
+      // Search in agriculture officers
+      if (!type || type === 'officer') {
+        district.agricultureOfficers.forEach(officer => {
+          if (officer.officerName.toLowerCase().includes(q.toLowerCase()) ||
+              officer.role.toLowerCase().includes(q.toLowerCase())) {
+            results.push({
+              district: district.district,
+              type: 'Agriculture Officer',
+              name: officer.officerName,
+              role: officer.role,
+              contact: officer.contact,
+              description: officer.description
+            });
+          }
+        });
+      }
+
+      // Search in helplines
+      if (!type || type === 'helpline') {
+        district.farmerSupportHelplines.forEach(helpline => {
+          if (helpline.contact.toLowerCase().includes(q.toLowerCase()) ||
+              helpline.details.toLowerCase().includes(q.toLowerCase())) {
+            results.push({
+              district: district.district,
+              type: 'Farmer Support Helpline',
+              contact: helpline.contact,
+              details: helpline.details
+            });
+          }
+        });
+      }
+    });
+
+    res.json({
+      query: q,
+      type: type || 'all',
+      results: results,
+      count: results.length
+    });
+  } catch (error) {
+    console.error('Error searching government organizations:', error.message);
+    res.status(500).json({
+      error: 'Failed to search government organizations',
+      details: error.message
+    });
+  }
+});
+
+// -------------------------
+// Punjab Agriculture Data API Endpoints
+// -------------------------
+
+// Get all Punjab districts data
+app.get('/api/punjab-agriculture', (req, res) => {
+  try {
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+    res.json(punjabData);
+  } catch (error) {
+    console.error('Error reading Punjab agriculture data:', error.message);
+    res.status(500).json({ error: 'Failed to load Punjab agriculture data' });
+  }
+});
+
+// Get specific district data
+app.get('/api/punjab-agriculture/district/:districtName', (req, res) => {
+  try {
+    const districtName = req.params.districtName;
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    const district = punjabData.districts.find(d =>
+      d.district.toLowerCase() === districtName.toLowerCase()
+    );
+
+    if (!district) {
+      return res.status(404).json({ error: 'District not found' });
+    }
+
+    res.json(district);
+  } catch (error) {
+    console.error('Error fetching district data:', error.message);
+    res.status(500).json({ error: 'Failed to fetch district data' });
+  }
+});
+
+// Get soil testing laboratories for a district
+app.get('/api/punjab-agriculture/district/:districtName/soil-labs', (req, res) => {
+  try {
+    const districtName = req.params.districtName;
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    const district = punjabData.districts.find(d =>
+      d.district.toLowerCase() === districtName.toLowerCase()
+    );
+
+    if (!district) {
+      return res.status(404).json({ error: 'District not found' });
+    }
+
+    res.json({
+      district: district.district,
+      soilTestingLaboratories: district.soilTestingLaboratories
+    });
+  } catch (error) {
+    console.error('Error fetching soil labs data:', error.message);
+    res.status(500).json({ error: 'Failed to fetch soil labs data' });
+  }
+});
+
+// Get agriculture officers for a district
+app.get('/api/punjab-agriculture/district/:districtName/officers', (req, res) => {
+  try {
+    const districtName = req.params.districtName;
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    const district = punjabData.districts.find(d =>
+      d.district.toLowerCase() === districtName.toLowerCase()
+    );
+
+    if (!district) {
+      return res.status(404).json({ error: 'District not found' });
+    }
+
+    res.json({
+      district: district.district,
+      agricultureOfficers: district.agricultureOfficers
+    });
+  } catch (error) {
+    console.error('Error fetching officers data:', error.message);
+    res.status(500).json({ error: 'Failed to fetch officers data' });
+  }
+});
+
+// Get farmer support helplines for a district
+app.get('/api/punjab-agriculture/district/:districtName/helplines', (req, res) => {
+  try {
+    const districtName = req.params.districtName;
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    const district = punjabData.districts.find(d =>
+      d.district.toLowerCase() === districtName.toLowerCase()
+    );
+
+    if (!district) {
+      return res.status(404).json({ error: 'District not found' });
+    }
+
+    res.json({
+      district: district.district,
+      farmerSupportHelplines: district.farmerSupportHelplines
+    });
+  } catch (error) {
+    console.error('Error fetching helplines data:', error.message);
+    res.status(500).json({ error: 'Failed to fetch helplines data' });
+  }
+});
+
+// Get tips and notes for a district
+app.get('/api/punjab-agriculture/district/:districtName/tips', (req, res) => {
+  try {
+    const districtName = req.params.districtName;
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    const district = punjabData.districts.find(d =>
+      d.district.toLowerCase() === districtName.toLowerCase()
+    );
+
+    if (!district) {
+      return res.status(404).json({ error: 'District not found' });
+    }
+
+    res.json({
+      district: district.district,
+      tipsNotes: district.tipsNotes
+    });
+  } catch (error) {
+    console.error('Error fetching tips data:', error.message);
+    res.status(500).json({ error: 'Failed to fetch tips data' });
+  }
+});
+
+// Get all districts list
+app.get('/api/punjab-agriculture/districts', (req, res) => {
+  try {
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    const districts = punjabData.districts.map(d => ({
+      name: d.district,
+      hasData: d.soilTestingLaboratories[0].laboratoryName !== 'Data not available'
+    }));
+
+    res.json({
+      districts: districts,
+      total: districts.length,
+      metadata: punjabData.metadata
+    });
+  } catch (error) {
+    console.error('Error fetching districts list:', error.message);
+    res.status(500).json({ error: 'Failed to fetch districts list' });
+  }
+});
+
+// Search districts by name
+app.get('/api/punjab-agriculture/search', (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    const matchingDistricts = punjabData.districts.filter(d =>
+      d.district.toLowerCase().includes(q.toLowerCase())
+    );
+
+    res.json({
+      query: q,
+      results: matchingDistricts,
+      count: matchingDistricts.length
+    });
+  } catch (error) {
+    console.error('Error searching districts:', error.message);
+    res.status(500).json({ error: 'Failed to search districts' });
+  }
+});
+
+// Get complete district summary
+app.get('/api/punjab-agriculture/district/:districtName/summary', (req, res) => {
+  try {
+    const districtName = req.params.districtName;
+    const punjabData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'punjab_agriculture_data.json'), 'utf8'));
+
+    const district = punjabData.districts.find(d =>
+      d.district.toLowerCase() === districtName.toLowerCase()
+    );
+
+    if (!district) {
+      return res.status(404).json({ error: 'District not found' });
+    }
+
+    // Create a summary with key information
+    const summary = {
+      district: district.district,
+      overview: {
+        soilLabsCount: district.soilTestingLaboratories.length,
+        officersCount: district.agricultureOfficers.length,
+        helplinesCount: district.farmerSupportHelplines.length,
+        tipsCount: district.tipsNotes.length
+      },
+      keyContacts: {
+        primaryOfficer: district.agricultureOfficers[0]?.officerName || 'Data not available',
+        primaryContact: district.agricultureOfficers[0]?.contact || 'Data not available',
+        mainHelpline: district.farmerSupportHelplines[0]?.contact || 'Data not available'
+      },
+      services: {
+        soilTesting: district.soilTestingLaboratories[0]?.services || 'Data not available',
+        officerDescription: district.agricultureOfficers[0]?.description || 'Data not available'
+      },
+      topTips: district.tipsNotes.slice(0, 2) // First 2 tips
+    };
+
+    res.json(summary);
+  } catch (error) {
+    console.error('Error fetching district summary:', error.message);
+    res.status(500).json({ error: 'Failed to fetch district summary' });
   }
 });
 

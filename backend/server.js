@@ -74,10 +74,23 @@ async function callGeminiAPI(prompt) {
   content = content.replace(/```json\s*([\s\S]*?)```/g, '$1').replace(/```/g, '').trim();
 
   try {
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    // Validate that parsed content has the expected structure for investment data
+    if (typeof parsed === 'object' && parsed !== null) {
+      return parsed;
+    } else {
+      throw new Error('Parsed content is not an object');
+    }
   } catch (err) {
-    // If not JSON, return as text
-    return content;
+    console.warn('Failed to parse AI response as JSON:', err.message);
+    console.warn('Raw content:', content.substring(0, 200) + '...');
+
+    // If not JSON or not an object, return a default object structure
+    return {
+      investment: '8,000 - 12,000',
+      profit: '20,000 - 30,000',
+      reasoning: 'Default values used due to AI response parsing error'
+    };
   }
 }
 
@@ -269,7 +282,7 @@ async function scrapeGovernmentOrgs(location) {
         const title = $(element).find('h3, .LC20lb').first().text().trim();
         const snippet = $(element).find('.VwiC3b, .aCOpRe, span').first().text().trim();
         const contact = $(element).find('a[href^="tel:"], a[href^="mailto:"], .LrzXr').first().text().trim();
-const address = $(element).find('.rllt__details div:nth-child(2)').first().text().trim() || snippet;
+        const address = $(element).find('.rllt__details div:nth-child(2)').first().text().trim() || snippet;
 
         // Function to extract phone numbers from text
         const extractPhoneNumbers = (text) => {
@@ -469,14 +482,105 @@ app.get('/api/user-inputs/:userId', (req, res) => {
   });
 });
 
-// Crop Analysis (Recommended Crops)
+// Crop Analysis (Recommended Crops) - PDF Version
 app.post('/api/crop-analysis', async (req, res) => {
-  const { location, landSize, landType, landHealth, season, waterFacility, duration, language } = req.body;
+  const { location, landSize, landType, landHealth, season, waterFacility, duration, language, crops } = req.body;
   if (!location || !landSize || !landType || !season || !waterFacility || !duration) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const prompt = `You are a 40+ year experienced farmer. Based on these inputs:
+  // If crops are provided in the request, use them for the report
+  let reportContent = '';
+
+  if (crops && crops.length > 0) {
+    // Generate detailed report with investment and profit information
+    reportContent = `Farm Advisory Report - Based on Your Specific Recommendations
+
+Location: ${location}
+Land Size: ${landSize}
+Land Type: ${landType}
+Land Health: ${landHealth}
+Season: ${season}
+Water Facility: ${waterFacility}
+Duration: ${duration}
+
+RECOMMENDED CROPS:
+`;
+
+    // Generate investment and profit data for each crop using AI
+    for (let i = 0; i < crops.length; i++) {
+      const crop = crops[i];
+
+      try {
+        const investmentPrompt = `You are an agricultural finance expert. Based on these farming conditions:
+- Location: ${location}
+- Land Type: ${landType}
+- Land Health: ${landHealth}
+- Season: ${season}
+- Water Facility: ${waterFacility}
+- Duration: ${duration}
+
+For ${crop.name}, provide realistic investment and profit estimates in Indian Rupees per acre.
+
+CRITICAL: Return ONLY valid JSON with this exact structure:
+{
+  "investment": "X,XXX - Y,YYY (including seeds, fertilizers, pesticides, and labor)",
+  "profit": "A,AAA - B,BBB",
+  "reasoning": "Brief explanation considering local conditions"
+}
+
+IMPORTANT RULES:
+- Return ONLY the JSON object, no other text
+- Do not include any explanations outside the JSON
+- Do not use markdown formatting
+- Do not include any prefixes or suffixes
+- The investment and profit must be realistic ranges for ${location} conditions
+- Reasoning should be brief and specific to the crop and conditions`;
+
+        const investmentData = await callGeminiAPI(investmentPrompt);
+
+        reportContent += `${i + 1}. ${crop.name}
+   Required Investment (₹/acre): ${investmentData.investment || '8,000 - 12,000'}
+   Expected Profit (₹/acre): ${investmentData.profit || '20,000 - 30,000'}
+   Reasoning: ${investmentData.reasoning || crop.reason || 'Suitable for local conditions'}
+
+`;
+      } catch (error) {
+        console.error(`Error generating investment data for ${crop.name}:`, error.message);
+        // Fallback to default values
+        reportContent += `${i + 1}. ${crop.name}
+   Required Investment (₹/acre): 8,000 - 12,000 (including seeds, fertilizers, pesticides, and labor)
+   Expected Profit (₹/acre): 20,000 - 30,000
+   Reasoning: ${crop.reason || 'Suitable for local conditions'}
+
+`;
+      }
+    }
+
+    reportContent += `
+ADDITIONAL RECOMMENDATIONS:
+
+• Review each recommended crop carefully based on your local market conditions
+• Consider consulting local agricultural experts for implementation
+• Monitor weather patterns and adjust planting schedules accordingly
+• Regular soil testing is recommended for optimal results
+• Consider crop rotation for sustainable farming practices
+
+NEXT STEPS:
+
+1. Select crops that match your experience and resources
+2. Plan your planting schedule based on seasonal conditions
+3. Arrange for necessary inputs (seeds, fertilizers, equipment)
+4. Consider market demand and pricing before final selection
+5. Start with smaller plots for new crops to test suitability
+
+For detailed farming plans for any of these crops, please visit the Crop Planning section of your application.
+
+Generated on: ${new Date().toLocaleString()}
+`;
+  } else {
+    // Fallback to AI-generated content if no crops provided
+    const prompt = `You are a 40+ year experienced farmer. Based on these inputs:
 Location: ${location}, Land Size: ${landSize}, Land Type: ${landType}, Land Health: ${landHealth}, Season: ${season}, Water Facility: ${waterFacility}, Duration: ${duration}
 
 Generate a detailed farm advisory report recommending 3-5 crops suitable for these conditions.
@@ -489,44 +593,106 @@ Include for each crop:
 Return ONLY plain text, not JSON. Structure the report as a professional text document with sections for each crop.
 `;
 
-  try {
-    // Call Gemini API directly for text response
-    const response = await fetch(GEMINI_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    });
+    try {
+      const response = await fetch(GEMINI_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API error: ${errorText}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gemini API error: ${errorText}`);
+      }
+
+      const data = await response.json();
+      reportContent = data.candidates[0].content.parts[0].text.trim();
+      reportContent = reportContent.replace(/```json\s*([\s\S]*?)```/g, '$1').replace(/```/g, '').trim();
+    } catch (error) {
+      reportContent = 'Error generating AI recommendations. Please try again later.';
+    }
+  }
+
+  // Always generate PDF
+  const doc = new PDFDocument();
+  const buffers = [];
+
+  doc.on('data', buffers.push.bind(buffers));
+  doc.on('end', () => {
+    const pdfBuffer = Buffer.concat(buffers);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="crop_advisory_report.pdf"');
+    res.send(pdfBuffer);
+  });
+
+  doc.fontSize(16).text('Farm Advisory Report', { align: 'center' });
+  doc.moveDown();
+
+  // Treat content as text
+  doc.fontSize(12).text(reportContent || 'No recommendations available.');
+
+  doc.end();
+});
+
+// Recommended Crops - JSON Version
+app.post('/api/recommended-crops', async (req, res) => {
+  const { location, landSize, landType, landHealth, season, waterFacility, duration } = req.body;
+  if (!location || !landSize || !landType || !season || !waterFacility || !duration) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const prompt = `You are a 40+ year experienced farmer. Based on these inputs:
+Location: ${location}, Land Size: ${landSize}, Land Type: ${landType}, Land Health: ${landHealth}, Season: ${season}, Water Facility: ${waterFacility}, Duration: ${duration}
+
+Recommend exactly 5 crops that are most suitable for these conditions.
+Return ONLY a JSON array with this exact structure:
+[
+  {"name": "Crop Name 1", "reason": "Brief reason for recommendation"},
+  {"name": "Crop Name 2", "reason": "Brief reason for recommendation"},
+  {"name": "Crop Name 3", "reason": "Brief reason for recommendation"},
+  {"name": "Crop Name 4", "reason": "Brief reason for recommendation"},
+  {"name": "Crop Name 5", "reason": "Brief reason for recommendation"}
+]
+
+Do not include any additional text, explanations, or markdown formatting. Return only the JSON array.
+`;
+
+  try {
+    const result = await callGeminiAPI(prompt);
+
+    // Ensure we have exactly 5 crops
+    let crops = Array.isArray(result) ? result : [];
+    if (crops.length < 5) {
+      // Add default crops if API returns fewer than 5
+      const defaultCrops = [
+        { name: "Wheat", reason: "Suitable for most regions and seasons" },
+        { name: "Rice", reason: "Good for areas with water availability" },
+        { name: "Cotton", reason: "Profitable cash crop for many regions" },
+        { name: "Sugarcane", reason: "High value crop with good returns" },
+        { name: "Maize", reason: "Versatile crop with multiple uses" }
+      ];
+
+      // Fill up to 5 crops with defaults
+      while (crops.length < 5) {
+        crops.push(defaultCrops[crops.length]);
+      }
     }
 
-    const data = await response.json();
-    let content = data.candidates[0].content.parts[0].text.trim();
-    content = content.replace(/```json\s*([\s\S]*?)```/g, '$1').replace(/```/g, '').trim();
+    // Take only first 5 crops if more are returned
+    crops = crops.slice(0, 5);
 
-    // Always generate PDF
-    const doc = new PDFDocument();
-    const buffers = [];
-
-    doc.on('data', buffers.push.bind(buffers));
-    doc.on('end', () => {
-      const pdfBuffer = Buffer.concat(buffers);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename="crop_advisory_report.pdf"');
-      res.send(pdfBuffer);
-    });
-
-    doc.fontSize(16).text('Farm Advisory Report', { align: 'center' });
-    doc.moveDown();
-
-    // Treat content as text
-    doc.fontSize(12).text(content || 'No recommendations available.');
-
-    doc.end();
+    res.json({ crops });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching recommended crops:', error.message);
+    // Return default crops as fallback
+    const defaultCrops = [
+      { name: "Wheat", reason: "Suitable for most regions and seasons" },
+      { name: "Rice", reason: "Good for areas with water availability" },
+      { name: "Cotton", reason: "Profitable cash crop for many regions" },
+      { name: "Sugarcane", reason: "High value crop with good returns" },
+      { name: "Maize", reason: "Versatile crop with multiple uses" }
+    ];
+    res.json({ crops: defaultCrops });
   }
 });
 
@@ -798,7 +964,7 @@ app.get('/api/government-organizations', (req, res) => {
     const governmentOrganizations = {
       district: districtData.district,
       soilTestingLaboratories: districtData.soilTestingLaboratories.filter(lab =>
-        lab.laboratoryName !== 'Data not available'
+       lab.laboratoryName !== 'Data not available'
       ),
       agricultureOfficers: districtData.agricultureOfficers.filter(officer =>
         officer.officerName !== 'Data not available'

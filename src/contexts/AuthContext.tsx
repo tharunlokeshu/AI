@@ -15,15 +15,22 @@ interface UserInputData {
   duration: string;
 }
 
+interface CropRecommendation {
+  name: string;
+  reason: string;
+}
+
 interface AuthContextType {
   user: User | null;
   userInputData: UserInputData | null;
   selectedCrop: string | null;
+  recommendedCrops: CropRecommendation[];
   login: (email: string, password: string) => void;
   signup: (name: string, email: string, password: string) => void;
   logout: () => void;
   saveUserInputData: (data: UserInputData) => void;
   selectCrop: (cropName: string) => void;
+  setRecommendedCrops: (crops: CropRecommendation[]) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [userInputData, setUserInputData] = useState<UserInputData | null>(null);
   const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
+  const [recommendedCrops, setRecommendedCropsState] = useState<CropRecommendation[]>([]);
 
   // Load persisted data on mount
   useEffect(() => {
@@ -66,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setUserInputData(null);
     setSelectedCrop(null);
+    setRecommendedCropsState([]);
     // Reset language to English on logout
     localStorage.setItem('selectedLanguage', 'en');
     localStorage.removeItem('translatedResources');
@@ -83,8 +92,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('selectedCrop', cropName);
   };
 
+  const setRecommendedCrops = (crops: CropRecommendation[]) => {
+    setRecommendedCropsState(crops);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, userInputData, selectedCrop, login, signup, logout, saveUserInputData, selectCrop }}>
+    <AuthContext.Provider value={{ user, userInputData, selectedCrop, recommendedCrops, login, signup, logout, saveUserInputData, selectCrop, setRecommendedCrops }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,55 +2,85 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Calendar, CheckCircle, Sprout, Droplets, Bug, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Calendar, CheckCircle, Sprout, Droplets, Bug, AlertTriangle, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const CropPlan = () => {
-  const { selectedCrop, userInputData } = useAuth();
+  const { selectedCrop, userInputData, recommendedCrops } = useAuth();
   const [cropPlan, setCropPlan] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // Always show crop selector first - ignore any previously selected crop
+  const [showCropSelector, setShowCropSelector] = useState(true);
+  const [localSelectedCrop, setLocalSelectedCrop] = useState("");
 
+  // Use recommended crops from AuthContext instead of fetching separately
+  const [cropsLoading, setCropsLoading] = useState(true);
+  const [cropsError, setCropsError] = useState(null);
+
+  // Get crop names from recommendedCrops (which come from CropAdvisory)
+  const getCropNames = () => {
+    if (recommendedCrops && recommendedCrops.length > 0) {
+      return recommendedCrops.map(crop => crop.name);
+    }
+    // Return empty array if no recommendations available - user should visit CropAdvisory first
+    return [];
+  };
+
+  // Handle loading state for recommendations
   useEffect(() => {
-    const fetchCropPlan = async () => {
-      if (!selectedCrop) {
-        setError("Please select a crop first");
-        return;
+    if (recommendedCrops && recommendedCrops.length > 0) {
+      setCropsLoading(false);
+      setCropsError(null);
+    } else if (recommendedCrops !== undefined) {
+      // recommendedCrops is loaded but empty
+      setCropsLoading(false);
+    }
+    // If recommendedCrops is still undefined, keep loading
+  }, [recommendedCrops]);
+
+  const fetchCropPlan = async (cropName) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/crop-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cropName: cropName,
+          location: userInputData?.location || 'General',
+          landSize: userInputData?.landSize || '1 acre',
+          landType: userInputData?.landType || 'General',
+          season: userInputData?.season || 'General',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch crop plan: ${errorText}`);
       }
 
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch('/api/crop-plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            cropName: selectedCrop,
-            location: userInputData?.location || 'General',
-            landSize: userInputData?.landSize || '1 acre',
-            landType: userInputData?.landType || 'General',
-            season: userInputData?.season || 'General',
-          }),
-        });
+      const data = await response.json();
+      setCropPlan(data);
+      setShowCropSelector(false);
+      setLocalSelectedCrop(cropName);
+      toast.success(`Crop plan generated for ${cropName}`);
+    } catch (err) {
+      console.error('Error fetching crop plan:', err);
+      setError(err.message || 'Unknown error occurred');
+      toast.error('Failed to generate crop plan');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to fetch crop plan: ${errorText}`);
-        }
+  const handleCropSelect = (cropName) => {
+    fetchCropPlan(cropName);
+  };
 
-        const data = await response.json();
-        setCropPlan(data);
-      } catch (err) {
-        console.error('Error fetching crop plan:', err);
-        setError(err.message || 'Unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCropPlan();
-  }, [selectedCrop, userInputData]);
+  // Remove the useEffect that was automatically fetching plans for selectedCrop
+  // Now users must always manually select a crop
 
   const getPhaseIcon = (phaseName) => {
     if (phaseName.toLowerCase().includes('preparation') || phaseName.toLowerCase().includes('sowing')) {
@@ -76,24 +106,92 @@ const CropPlan = () => {
     return colors[index % colors.length];
   };
 
-  if (!selectedCrop) {
+  // Show crop selector if no crop is selected or user wants to select a different crop
+  if (showCropSelector) {
+    const cropNames = getCropNames();
+
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 flex items-center justify-center">
-        <Card className="bg-card/80 backdrop-blur-sm shadow-lg max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-primary">No Crop Selected</CardTitle>
-            <CardDescription>
-              Please select a crop from the Crop Advisory page first.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button asChild className="bg-primary hover:bg-primary-hover text-primary-foreground">
-              <Link to="/crop-advisory">
-                Go to Crop Advisory
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
+        {/* Header */}
+        <header className="bg-card/80 backdrop-blur-sm shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 p-2 rounded-full">
+                <Sprout className="h-6 w-6 text-primary" />
+              </div>
+              <h1 className="text-xl font-bold text-primary">Select Crop for Planning</h1>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <Card className="bg-card/80 backdrop-blur-sm shadow-lg">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl text-primary">Choose Your Crop</CardTitle>
+                <CardDescription className="text-lg">
+                  Select from crops recommended for {userInputData?.location || 'your region'} during {userInputData?.season || 'current season'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {cropsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-flex items-center gap-2 text-primary">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      <span>Loading crop recommendations...</span>
+                    </div>
+                  </div>
+                ) : cropNames.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Sprout className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-muted-foreground mb-4">
+                      No Crop Recommendations Available
+                    </h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      Please visit the Crop Advisory page first to get personalized crop recommendations based on your farm details.
+                    </p>
+                    <div className="flex gap-4 justify-center">
+                      <Button asChild>
+                        <Link to="/crop-advisory">
+                          <Sprout className="h-4 w-4 mr-2" />
+                          Get Crop Recommendations
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {cropNames.map((crop) => (
+                      <Button
+                        key={crop}
+                        variant="outline"
+                        className="h-16 flex flex-col items-center justify-center gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                        onClick={() => handleCropSelect(crop)}
+                        disabled={loading}
+                      >
+                        <Sprout className="h-5 w-5" />
+                        <span className="text-sm font-medium">{crop}</span>
+                      </Button>
+                    ))}
+                  </div>
+                )}
+
+                {cropNames.length > 0 && (
+                  <div className="mt-8 text-center">
+                    <p className="text-muted-foreground">Select a crop from the recommendations above to get detailed farming plans.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </main>
       </div>
     );
   }
@@ -115,6 +213,16 @@ const CropPlan = () => {
             </div>
             <h1 className="text-xl font-bold text-primary">Crop Planning</h1>
           </div>
+          <div className="ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCropSelector(true)}
+            >
+              <Sprout className="h-4 w-4 mr-2" />
+              Select Different Crop
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -122,7 +230,7 @@ const CropPlan = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-primary mb-4">
-            {selectedCrop} Farming Plan
+            {localSelectedCrop} Farming Plan
           </h2>
           <p className="text-lg text-muted-foreground">
             Step-by-step schedule for optimal crop production
@@ -245,18 +353,7 @@ const CropPlan = () => {
           </div>
         )}
 
-        <div className="mt-8 text-center">
-          <Button asChild variant="outline" className="mr-4">
-            <Link to="/crop-advisory">
-              Select Different Crop
-            </Link>
-          </Button>
-          <Button asChild className="bg-primary hover:bg-primary-hover text-primary-foreground">
-            <Link to="/dashboard">
-              Back to Dashboard
-            </Link>
-          </Button>
-        </div>
+
       </main>
     </div>
   );
